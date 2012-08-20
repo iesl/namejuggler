@@ -29,7 +29,7 @@ object PersonNameFormat extends Logging {
 	def isDegree(s: String): Boolean = {
 		// ** simplistic
 		import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
-		val result = s.nonEmpty && (s.filter(_ == '.').nonEmpty || s.isAllCaps)
+		val result = s.nonEmpty && (s.filter(_ == '.').nonEmpty || s.isAllUpperCase)
 		//logger.debug("Checking Degree:" + s + " : " + s.nonEmpty + " && ( " + s.filter(_ == '.').nonEmpty + " || " + isAllCaps(s) + ")")
 		result
 	}

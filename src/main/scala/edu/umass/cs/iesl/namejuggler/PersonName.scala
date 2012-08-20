@@ -1,9 +1,8 @@
 package edu.umass.cs.iesl.namejuggler
 
 import edu.umass.cs.iesl.scalacommons.StringUtils._
-import edu.umass.cs.iesl.scalacommons.OptionUtils
+import edu.umass.cs.iesl.scalacommons.{StringUtils, OptionUtils, NonemptyString}
 import com.weiglewilczek.slf4s.Logging
-import edu.umass.cs.iesl.scalacommons.NonemptyString
 
 object PersonName {
 	/**
@@ -85,6 +84,8 @@ trait PersonName {
 	 *
 	 * Names with particles should simply include the particle, e.g. "de la Mouliere".  The later tokenization for matching should produce at least
 	 * "Mouliere" and "la Mouliere", since it's not predictable which particles are "dropping" and which are not.
+   *
+   * Variants that can be inferred at matching time (e.g., with particles removed, or accented characters reduced to roman) need not be stored explicitly.
 	 *
 	 * Surnames may also include known alternate spellings, e.g. Jouline/Zhulin
 	 */
@@ -119,14 +120,38 @@ trait CanonicalPersonName extends PersonName with Logging {
 
 		val matchingMiddle = compatibleNameSet(withDerivations.middleNames, other.withDerivations.middleNames)
 
-		val matchingLast = surNames.map(_.toLowerCase).intersect(other.surNames.map(_.toLowerCase)).nonEmpty
+    val sA = surNames.flatMap(expandSurname)
+    val sB = other.surNames.flatMap(expandSurname)
+    val sAB = sA.intersect(sB)
+    val matchingLast = sAB.nonEmpty
 
 		val result = matchingLast && matchingFirst && matchingMiddle
 		logger.debug(result.toString)
 		result
 	}
 
-	private def compatibleNameSet(a: Seq[NonemptyString], b: Seq[NonemptyString]): Boolean = {
+  private def expandSurname(s: NonemptyString): Set[NonemptyString] = {
+    import StringUtils.enrichString
+    val deAccented = NonemptyString(s.s.deAccent)
+    val base : Set[String] = if (deAccented == s) {
+      Set(s)
+    } else {
+      Set(s, deAccented)
+    }
+    base.map(_.toLowerCase).flatMap(removeParticles).flatMap(splitHyphenated).flatMap(emptyStringToNone)
+  }
+
+  private def removeParticles(s: String): Set[String] = {
+    val result = s.s.split(" ").scanRight(List[String]())((element: String, prev:List[String]) => (element :: prev))
+    result.map(_.mkString(" ")).toSet
+  }
+
+  private def splitHyphenated(s: String): Set[String] = {
+    s.s.split("-").toSet
+  }
+
+
+  private def compatibleNameSet(a: Seq[NonemptyString], b: Seq[NonemptyString]): Boolean = {
 		lazy val aa = a.map(_.toLowerCase).flatMap(emptyStringToNone(_))
 		lazy val bb = b.map(_.toLowerCase).flatMap(emptyStringToNone(_))
 

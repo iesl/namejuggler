@@ -5,6 +5,7 @@ import edu.umass.cs.iesl.scalacommons.StringUtils.emptyStringToNone
 import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
 import scala.MatchError
 import com.weiglewilczek.slf4s.Logging
+import annotation.tailrec
 
 /**
  * @author <a href="mailto:dev@davidsoergel.com">David Soergel</a>
@@ -16,256 +17,273 @@ import com.weiglewilczek.slf4s.Logging
  */
 object PersonNameParser extends Logging {
 
-	import PersonNameFormat._
+  import PersonNameFormat._
 
-	private val splitFirst = """^(.*?)[ ]+(.*)$""".r
-	private val splitLast  = """^(.*[^, ])([, ]+)(.*)$""".r
+  private val splitFirst = """^(.*?)[ ]+(.*)$""".r
+  private val splitLast = """^(.*[^, ])([, ]+)(.*)$""".r
 
-	def stripPrefixes(s: String): (Set[NonemptyString], String) = {
-		try {
-			val splitFirst(firstToken, remainder) = s.trim
-			if (isPrefix(firstToken)) {
-				val (p, r) = stripPrefixes(remainder)
-				val f: Option[NonemptyString] = firstToken
-				(p + f.get, r)
-			}
-			else (Set.empty, s)
-		}
-		catch {
-			case e: MatchError => (Set.empty, s)
-		}
-	}
+  def stripPrefixes(s: String): (Set[NonemptyString], String) = {
+    try {
+      val splitFirst(firstToken, remainder) = s.trim
+      if (isPrefix(firstToken)) {
+        val (p, r) = stripPrefixes(remainder)
+        val f: Option[NonemptyString] = firstToken
+        (p + f.get, r)
+      }
+      else (Set.empty, s)
+    }
+    catch {
+      case e: MatchError => (Set.empty, s)
+    }
+  }
 
-	def stripSuffixes(s: String): (Option[NonemptyString], Set[NonemptyString], String) = {
-		try {
-			val splitLast(remainder, separator, lastToken) = s.trim
-			if (isHereditySuffix(lastToken)) {
-				val (h, d, r) = stripSuffixes(remainder)
-				val f: Option[NonemptyString] = lastToken
-				if (h.nonEmpty) {throw new PersonNameParsingException("More than one heredity suffix: " + s)}
+  def stripSuffixes(s: String): (Option[NonemptyString], Set[NonemptyString], String) = {
+    try {
+      val splitLast(remainder, separator, lastToken) = s.trim
+      if (isHereditySuffix(lastToken)) {
+        val (h, d, r) = stripSuffixes(remainder)
+        val f: Option[NonemptyString] = lastToken
+        if (h.nonEmpty) {
+          throw new PersonNameParsingException("More than one heredity suffix: " + s)
+        }
 
-				(f, d, r)
-			}
-			else if ((remainder.contains(",") && separator.contains(",")) || isDegree(lastToken)) {
-				logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
-				val (h, d, r) = stripSuffixes(remainder)
-				val f: Option[NonemptyString] = lastToken
-				(h, d + f.get, r)
-			}
-			else (None, Set.empty, s)
-		}
-		catch {
-			case e: MatchError => (None, Set.empty, s)
-		}
-	}
+        (f, d, r)
+      }
+      else if ((remainder.contains(",") && separator.contains(",")) || isDegree(lastToken)) {
+        logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
+        val (h, d, r) = stripSuffixes(remainder)
+        val f: Option[NonemptyString] = lastToken
+        (h, d + f.get, r)
+      }
+      else (None, Set.empty, s)
+    }
+    catch {
+      case e: MatchError => (None, Set.empty, s)
+    }
+  }
 
-	// Kermit Kalman the Frog, Ph.D., F.R.S.
-	// the Frog, Kermit Kalman, Ph.D., F.R.S.
-	// the Frog, Ph.D., F.R.S., Kermit Kalman  // ** this never happens?
-	// the Frog, Kermit Kalman
-	// we are not parsing lists here, but list context might be informative if multiple names have a consistent format:
-	// the Frog KK, Grouch O, and Bird B.
-	// KK the Frog, O Grouch, and B Bird.
-	// is Jones, M.D. => Michael Douglas Jones or Dr. Jeremiah Jones, MD?  Probably the former. But MD Jones, MD is Dr. Michael Douglas Jones, M.D.
-	def parseFullName(s: String): PersonName = {
-		val (parsedPrefixes: Set[NonemptyString], noPrefixes: String) = stripPrefixes(s)
-		val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes)
+  // Kermit Kalman the Frog, Ph.D., F.R.S.
+  // the Frog, Kermit Kalman, Ph.D., F.R.S.
+  // the Frog, Ph.D., F.R.S., Kermit Kalman  // ** this never happens?
+  // the Frog, Kermit Kalman
+  // we are not parsing lists here, but list context might be informative if multiple names have a consistent format:
+  // the Frog KK, Grouch O, and Bird B.
+  // KK the Frog, O Grouch, and B Bird.
+  // is Jones, M.D. => Michael Douglas Jones or Dr. Jeremiah Jones, MD?  Probably the former. But MD Jones, MD is Dr. Michael Douglas Jones, M.D.
+  def parseFullName(s: String): PersonName = {
+    val (parsedPrefixes: Set[NonemptyString], noPrefixes: String) = stripPrefixes(s)
+    val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes)
 
-		val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
+    val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
 
-		val coreName: PersonName = {
-			if (coreToks.size == 0) {
-				// no data
-				new PersonName() {}
-			}
-			else if (coreToks.size == 1) {
-				// no commas: Kermit Kalman the Frog
+    val coreName: PersonName = {
+      if (coreToks.size == 0) {
+        // no data
+        new PersonName() {}
+      }
+      else if (coreToks.size == 1) {
+        // no commas: Kermit Kalman the Frog
 
-				parseUninvertedCore(coreToks.head)
-			}
-			else if (coreToks.size == 2) {
-				// exactly one comma:
-				// the Frog, Kermit Kalman
-				new PersonNameWithDerivations {
-					override val givenNames: Seq[NonemptyString] = coreToks(1).flatMap(emptyStringToNone)
+        parseUninvertedCore(coreToks.head)
+      }
+      else if (coreToks.size == 2) {
+        // exactly one comma:
+        // the Frog, Kermit Kalman
+        new PersonNameWithDerivations {
+          override val givenNames: Seq[NonemptyString] = coreToks(1).flatMap(emptyStringToNone)
 
-					// declare a single complete surname for now.  If there are several names, they should get expanded later.
-					override val surNames: Set[NonemptyString] = emptyStringToNone(coreToks(0).mkString(" ")).toSet
-				}
-			}
-			else {
-				throw new PersonNameParsingException("Multiple commas even after removing all degrees")
-			}
-		}
+          // declare a single complete surname for now.  If there are several names, they should get expanded later.
+          override val surNames: Set[NonemptyString] = emptyStringToNone(coreToks(0).mkString(" ")).toSet
+        }
+      }
+      else {
+        throw new PersonNameParsingException("Multiple commas even after removing all degrees")
+      }
+    }
 
-		val extraName = new PersonName() {
-			override val prefixes: Set[NonemptyString] = parsedPrefixes
-			override val hereditySuffix                = parsedHereditySuffix
-			override val degrees                       = parsedDegrees
-		}
+    val extraName = new PersonName() {
+      override val prefixes: Set[NonemptyString] = parsedPrefixes
+      override val hereditySuffix = parsedHereditySuffix
+      override val degrees = parsedDegrees
+    }
 
-		PersonName.merge(Seq(extraName, coreName))
-		/*
+    PersonName.merge(Seq(extraName, coreName))
+    /*
 
-		// ** return the person name format actually found.  Maybe recurse to steady state?
-		def parseFullName(s: String, expectedFormat: PersonNameFormat): (PersonName, PersonNameFormat) = {
-			throw new NotImplementedException("Fancy name processing temporarily disabled")
-		}
+     // ** return the person name format actually found.  Maybe recurse to steady state?
+     def parseFullName(s: String, expectedFormat: PersonNameFormat): (PersonName, PersonNameFormat) = {
+       throw new NotImplementedException("Fancy name processing temporarily disabled")
+     }
 
-		*/
-	}
+     */
+  }
 
-	class PersonNameParsingException(s: String) extends Exception(s)
+  class PersonNameParsingException(s: String) extends Exception(s)
 
-	private def parseUninvertedCore(ss: Array[String]): PersonName = {
-		// OK this is the hard part.  No commas or other structure, so we have to figure out which part is which.
-		// ** assume case sensitive for now to help identify the "prelast" particle
-		//nameTokens.filter(_.is)
-		// detect nicknames in quotes, etc.
-		// ** completely simplistic for now
+  private def parseUninvertedCore(nameTokens: Array[String]): PersonName = {
+    // OK this is the hard part.  No commas or other structure, so we have to figure out which part is which.
+    // ** assume case sensitive for now to help identify the "prelast" particle
+    //nameTokens.filter(_.is)
+    // detect nicknames in quotes, etc.
+    // ** completely simplistic for now
 
-		new PersonName {
-			override val surNames  : Set[NonemptyString] = emptyStringToNone(ss.last).toSet
-			override val givenNames: Seq[NonemptyString] = {
-				val rawGivenNames = ss.dropRight(1).flatMap(emptyStringToNone)
-				if (rawGivenNames.size == 1 && rawGivenNames(0).s.isAllCaps && rawGivenNames(0).s.length < 4) {
-					// interpret solid caps as initials
-					rawGivenNames(0).s.split("").flatMap(emptyStringToNone)}
-				else {
-					rawGivenNames
-				}
-			}
-		}
-	}
-
-	/*
-			 /*	def parseFullName(s: String): PersonName =
-					  {
-					  throw new NotImplementedException("Fancy name processing temporarily disabled")
-					  }
-			  */
-		 // Kermit Kalman the Frog, Ph.D., F.R.S.
-		 // the Frog, Kermit Kalman, Ph.D., F.R.S.
-		 // the Frog, Ph.D., F.R.S., Kermit Kalman  // ** this never happens?
-		 // the Frog, Kermit Kalman
-
-
-		 // we are not parsing lists here, but list context might be informative if multiple names have a consistent format:
-		 // the Frog KK, Grouch O, and Bird B.
-		 // KK the Frog, O Grouch, and B Bird.
-		 def parseFullName(s: String): PersonName =
-			 {
-			 //throw new NotImplementedException("Fancy name processing temporarily disabled")
-			 // split first on commas, then on spaces
-			 val toks: Array[Array[String]] = s.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
-
-			 // remove any valid prefixes from the front
-			 val (prefixName: PersonName, toks2: Array[Array[String]]) = stripPrefixes(toks)
-
-			 // remove any valid degrees and hereditySuffixes from the end
-			 val (degreesName: PersonName, coreToks: Array[Array[String]]) = stripSuffixes(toks)
-
-			 val coreName: PersonName =
-				 {
-				 if (coreToks.size == 0)
-					 {
-					 // no data
-					 new PersonName()
-						 {}
-					 }
-				 else if (coreToks.size == 1)
-					 {
-					 // no commas: Kermit Kalman the Frog Ph.D.
-
-					 parseUninvertedFullNoPrefix(coreToks.head)
-					 }
-				 else if (coreToks.size == 2)
-					 {
-					 // exactly one comma:
-					 // the Frog, Kermit Kalman
-					 new PersonNameWithDerivations
-						 {
-						 override val givenNames = coreToks(1).mkString(" ")
-						 override val surNames   = Set(coreToks(0).mkString(" "))
-						 }
-					 }
-				 else
-					 {
-					 throw new PersonNameParsingException("Multiple commas even after removing all degrees")
-					 }
-				 }
-
-			 // merge the prefix, degrees, and core data
-			 PersonName.merge(Seq(prefixName, degreesName, coreName))
-			 }
-
-		 private def parsePrefix(s: String): Option[String] =
-			 {
-			 // BAD
-			 // ** note we are case-sensitive here, but we ignore periods.  Solid caps will fail, eg. MR. KERMIT FROG.
-			 // the reason is that MR FRITZ could be Mary Roselda Fritz, bur MR. FRITZ could not.
-			 val q = s.replace(".", "")
-			 if (validPrefixes.contains(q)) Some(q) else None
-			 }
-
-		 /**
-		  * Remove any valid prefixes from the front and collect them into a PersonName.
-		  */
-		 private def stripPrefixes(ss: Array[Array[String]]): (PersonName, Array[Array[String]]) =
-			 {
-			 val p = ss.head.head
-			 val pp = parsePrefix(p)
-			 pp match
-			 {
-				 case None => (new PersonName()
-					 {}, ss)
-				 case Some(s: String) => (new PersonName()
-					 {prefix = s}, ss.head.tail +: ss.tail)
-			 }
-			 }
-
-		 private def parseFirstMiddle(ss: Array[String]): PersonName = new PersonNameWithDerivations
-			 {givenNames = ss.mkString(" ")}
+    val (givenR, sur) = splitOnCondition((s: String) => s.isAllLowerCase)(Nil, nameTokens.toList)
 
 
 
-		 */
-	/******************************************/
-	/****** CRUFT BELOW ***********************/
-	/*
-		   val invertedNamePattern = """^([^,]*),([^,]*)$""".r
+    new PersonName {
+      override val surNames: Set[NonemptyString] = emptyStringToNone(sur.mkString(" ")).toSet
+      //emptyStringToNone(nameTokens.last).toSet
+      override val givenNames: Seq[NonemptyString] = {
+        val rawGivenNames = givenR.reverse.flatMap(emptyStringToNone)
+        if (rawGivenNames.size == 1 && rawGivenNames(0).s.isAllUpperCase && rawGivenNames(0).s.length < 4) {
+          // interpret solid caps as initials
+          rawGivenNames(0).s.split("").flatMap(emptyStringToNone)
+        }
+        else {
+          rawGivenNames
+        }
+      }
+    }
+  }
 
-		   /**
-			* if there is exactly one comma in the name, reverse the order, e.g. "lastname, firstname" -> "firstname lastname".  In any other case just
-			* return the
-			* string as is.  Careful: the prefix, suffix, and degree may be confounded with the inversion, e.g. Dr. Soergel, David, Ph.D.
-			*
-			* @param s
-			*/
-		   def uninvertName(s: String): String =
-			   {
-			   assert(!s.isEmpty)
-			   if (s.count(_ == ',') > 1)
-				   {
-				   throw new PersonNameParsingException("Too many commas: " + s)
-				   }
-			   val q = try
-			   {
-			   val invertedNamePattern(lastname, firstname) = s
-			   if (lastname != null && firstname != null)
-				   {
-				   firstname.trim + " " + lastname.trim
-				   }
-			   else s
-			   }
-			   catch
-			   {
-			   case e: MatchError => s
-			   }
-			   val r = q.replace("  ", " ").trim
-			   assert(!r.isEmpty)
-			   r
-			   }*/
+  @tailrec
+  private def splitOnCondition[T](condition: (T => Boolean))(a: List[T], b: List[T]): (List[T], List[T]) = {
+    b match {
+      case Nil => (a, b)
+      case h :: l if (l.isEmpty || condition(h)) => (a, b)
+      case h :: l => splitOnCondition[T](condition)(h :: a, l)
+    }
+  }
+
+  /*
+       /*	def parseFullName(s: String): PersonName =
+            {
+            throw new NotImplementedException("Fancy name processing temporarily disabled")
+            }
+        */
+     // Kermit Kalman the Frog, Ph.D., F.R.S.
+     // the Frog, Kermit Kalman, Ph.D., F.R.S.
+     // the Frog, Ph.D., F.R.S., Kermit Kalman  // ** this never happens?
+     // the Frog, Kermit Kalman
+
+
+     // we are not parsing lists here, but list context might be informative if multiple names have a consistent format:
+     // the Frog KK, Grouch O, and Bird B.
+     // KK the Frog, O Grouch, and B Bird.
+     def parseFullName(s: String): PersonName =
+       {
+       //throw new NotImplementedException("Fancy name processing temporarily disabled")
+       // split first on commas, then on spaces
+       val toks: Array[Array[String]] = s.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
+
+       // remove any valid prefixes from the front
+       val (prefixName: PersonName, toks2: Array[Array[String]]) = stripPrefixes(toks)
+
+       // remove any valid degrees and hereditySuffixes from the end
+       val (degreesName: PersonName, coreToks: Array[Array[String]]) = stripSuffixes(toks)
+
+       val coreName: PersonName =
+         {
+         if (coreToks.size == 0)
+           {
+           // no data
+           new PersonName()
+             {}
+           }
+         else if (coreToks.size == 1)
+           {
+           // no commas: Kermit Kalman the Frog Ph.D.
+
+           parseUninvertedFullNoPrefix(coreToks.head)
+           }
+         else if (coreToks.size == 2)
+           {
+           // exactly one comma:
+           // the Frog, Kermit Kalman
+           new PersonNameWithDerivations
+             {
+             override val givenNames = coreToks(1).mkString(" ")
+             override val surNames   = Set(coreToks(0).mkString(" "))
+             }
+           }
+         else
+           {
+           throw new PersonNameParsingException("Multiple commas even after removing all degrees")
+           }
+         }
+
+       // merge the prefix, degrees, and core data
+       PersonName.merge(Seq(prefixName, degreesName, coreName))
+       }
+
+     private def parsePrefix(s: String): Option[String] =
+       {
+       // BAD
+       // ** note we are case-sensitive here, but we ignore periods.  Solid caps will fail, eg. MR. KERMIT FROG.
+       // the reason is that MR FRITZ could be Mary Roselda Fritz, bur MR. FRITZ could not.
+       val q = s.replace(".", "")
+       if (validPrefixes.contains(q)) Some(q) else None
+       }
+
+     /**
+      * Remove any valid prefixes from the front and collect them into a PersonName.
+      */
+     private def stripPrefixes(ss: Array[Array[String]]): (PersonName, Array[Array[String]]) =
+       {
+       val p = ss.head.head
+       val pp = parsePrefix(p)
+       pp match
+       {
+         case None => (new PersonName()
+           {}, ss)
+         case Some(s: String) => (new PersonName()
+           {prefix = s}, ss.head.tail +: ss.tail)
+       }
+       }
+
+     private def parseFirstMiddle(ss: Array[String]): PersonName = new PersonNameWithDerivations
+       {givenNames = ss.mkString(" ")}
+
+
+
+     */
+  /******************************************/
+  /****** CRUFT BELOW ***********************/
+  /*
+       val invertedNamePattern = """^([^,]*),([^,]*)$""".r
+
+       /**
+      * if there is exactly one comma in the name, reverse the order, e.g. "lastname, firstname" -> "firstname lastname".  In any other case just
+      * return the
+      * string as is.  Careful: the prefix, suffix, and degree may be confounded with the inversion, e.g. Dr. Soergel, David, Ph.D.
+      *
+      * @param s
+      */
+       def uninvertName(s: String): String =
+         {
+         assert(!s.isEmpty)
+         if (s.count(_ == ',') > 1)
+           {
+           throw new PersonNameParsingException("Too many commas: " + s)
+           }
+         val q = try
+         {
+         val invertedNamePattern(lastname, firstname) = s
+         if (lastname != null && firstname != null)
+           {
+           firstname.trim + " " + lastname.trim
+           }
+         else s
+         }
+         catch
+         {
+         case e: MatchError => s
+         }
+         val r = q.replace("  ", " ").trim
+         assert(!r.isEmpty)
+         r
+         }*/
 }
 
 /*case class Person(firstNameInitial: Option[Char] = None, // used only for J. Harrison Ford
