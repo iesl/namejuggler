@@ -74,18 +74,18 @@ trait PersonNameWithDerivations extends PersonName {
   def fullNames: Set[NonemptyString] = Set.empty
 
   // assume that the longest is the most informative
-  final def longestSurName: Option[NonemptyString] = surNames.toSeq.sortBy(-_.s.size).headOption
+  final def longestSurName: Option[NonemptyString] = toCanonical.surNames.toSeq.sortBy(-_.s.size).headOption
 
   // assume that the longest is the most informative
-  final def longestFullName: Option[NonemptyString] = fullNames.toSeq.sortBy(-_.s.size).headOption
+  final def longestFullName: Option[NonemptyString] = inferFully.fullNames.toSeq.sortBy(-_.s.size).headOption
 
-  final def bestFullName: Option[NonemptyString] = preferredFullName.orElse(longestFullName)
+  final def bestFullName: Option[NonemptyString] = inferFully.preferredFullName.orElse(longestFullName)
 
   /**
    * Propagate info around all the fields.
    * @return
    */
-  def inferFully: PersonNameWithDerivations = {
+  lazy val inferFully: PersonNameWithDerivations = {
     // first infer canonical fields only from derived fields
     //val proposedCanonical: CanonicalPersonName = new InferredCanonicalPersonName(this)
     // override those with explicit canonical fields
@@ -105,7 +105,7 @@ trait PersonNameWithDerivations extends PersonName {
 
   override def toString = bestFullName.map(_.s).getOrElse("")
 
-  def toCanonical: CanonicalPersonName = new InferredCanonicalPersonName(this)
+  lazy val toCanonical: CanonicalPersonName = new InferredCanonicalPersonName(this)
 
   /*
 //.orElse(n.lastInitial)
@@ -132,7 +132,7 @@ override val middleNames: Seq[NonemptyString] =
  * @param n
  */
 class CanonicalPersonNameWithDerivations(n: CanonicalPersonName) extends CanonicalPersonName with PersonNameWithDerivations {
-  override def toCanonical = n
+  override lazy val toCanonical = n
 
   // first copy the canonical fields
   override lazy val prefixes = n.prefixes

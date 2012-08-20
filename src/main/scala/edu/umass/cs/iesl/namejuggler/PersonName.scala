@@ -103,7 +103,7 @@ trait PersonName {
  * allow declaring a record canonical, to ensure that there are no explicit derivations
  */
 trait CanonicalPersonName extends PersonName with Logging {
-	def withDerivations = new CanonicalPersonNameWithDerivations(this)
+  lazy val withDerivations = new CanonicalPersonNameWithDerivations(this)
 
 	override def toString = withDerivations.toString
 
