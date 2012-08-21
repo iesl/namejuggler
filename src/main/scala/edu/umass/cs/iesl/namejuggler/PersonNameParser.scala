@@ -49,7 +49,18 @@ object PersonNameParser extends Logging {
 
         (f, d, r)
       }
-      else if ((remainder.contains(",") && separator.contains(",")) || isDegree(lastToken)) {
+
+      // it can be hard to distinguish degrees from middle initials.
+      // Is Smith, John RN == John R. N. Smith, or John Smith, RN?
+      // we interpret that case as middle initials, but Smith, John, RN as a degree.
+
+      else if (separator.contains(",") && (remainder.contains(",") || isDegree(lastToken))) {
+        logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
+        val (h, d, r) = stripSuffixes(remainder)
+        val f: Option[NonemptyString] = lastToken
+        (h, d + f.get, r)
+      }
+      else if (!separator.contains(",") && !remainder.contains(",") && isDegree(lastToken)) {
         logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
         val (h, d, r) = stripSuffixes(remainder)
         val f: Option[NonemptyString] = lastToken
