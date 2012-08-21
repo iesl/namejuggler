@@ -13,13 +13,19 @@ object PersonNameFormat extends Logging {
 
   private val allValidPrefixes = {
     import edu.umass.cs.iesl.scalacommons.StringUtils._
-    validPrefixes ++ validPrefixes.map(_.removePunctuation)
+    validPrefixes ++ validPrefixes.map(_.stripPunctuation)
   }
 
   // ** don't bother listing these-- too many possibilities
   // http://en.wikipedia.org/wiki/List_of_post-nominal_letters
-  //private val validDegrees =
-  //	Seq("M.D.","Ph.D")
+  // http://en.wikipedia.org/wiki/Academic_degrees
+  private val validDegrees = Seq("M.D.","Ph.D")
+
+  private val allValidDegrees = {
+    import edu.umass.cs.iesl.scalacommons.StringUtils._
+    validDegrees ++ validDegrees.map(_.stripPunctuation)
+  }
+
   private val validHereditySuffixes =
     Seq("Jr.", "Sr.", "II", "III", "IV")
 
@@ -34,7 +40,7 @@ object PersonNameFormat extends Logging {
   def isDegree(s: String): Boolean = {
     // ** simplistic
     import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
-    val result = s.nonEmpty && (s.filter(_ == '.').nonEmpty || s.isAllUpperCase)
+    val result = s.trim.nonEmpty && (allValidDegrees.contains(s) || s.filter(_ == '.').nonEmpty || s.isAllUpperCase)
     //logger.debug("Checking Degree:" + s + " : " + s.nonEmpty + " && ( " + s.filter(_ == '.').nonEmpty + " || " + isAllCaps(s) + ")")
     result
   }

@@ -153,18 +153,18 @@ trait CanonicalPersonName extends PersonName with Logging {
 
   private def compatibleNameSet(a: Seq[NonemptyString], b: Seq[NonemptyString]): Boolean = {
 		lazy val aa = a.map(_.toLowerCase)
-		lazy val bb = b.map(_.toLowerCase)
+    lazy val bb = b.map(_.toLowerCase)
 
 		// At least one given name or nickname matches fully
-		lazy val matching = aa.intersect(bb).nonEmpty
+    lazy val matching = aa.intersect(bb).nonEmpty
 
 		// if a given name is provided only as an initial, see if a full given name or initial from the other name matches
-		lazy val aInitialsOnly: Seq[String] = aa.filter(_.s.length == 1)
-		lazy val bInitialsOnly: Seq[String] = bb.filter(_.s.length == 1)
-		lazy val aAsInitials: Seq[String] = aa.map(x => x.s.head.toString)
-		lazy val bAsInitials: Seq[String] = bb.map(x => x.s.head.toString)
+    lazy val aInitialsOnly: Seq[String] = aa.filter(_.s.stripPunctuation.length == 1).map(x => x.s.head.toString)
+    lazy val bInitialsOnly: Seq[String] = bb.filter(_.s.stripPunctuation.length == 1).map(x => x.s.head.toString)
+    lazy val aAsInitials: Seq[String] = aa.map(x => x.s.head.toString)
+    lazy val bAsInitials: Seq[String] = bb.map(x => x.s.head.toString)
 
-		lazy val matchingInitial = aInitialsOnly.intersect(bAsInitials).nonEmpty || bInitialsOnly.intersect(aAsInitials).nonEmpty
+    lazy val matchingInitial = aInitialsOnly.intersect(bAsInitials).nonEmpty || bInitialsOnly.intersect(aAsInitials).nonEmpty
 
 		a.isEmpty || b.isEmpty || matching || matchingInitial
 	}
@@ -193,7 +193,7 @@ object InferredCanonicalPersonName {
  * @param n
  */
 class InferredCanonicalPersonName(n: PersonNameWithDerivations) extends CanonicalPersonName with Logging {
-	private lazy val nParsedFullNames = n.fullNames.map(n => PersonNameParser.parseFullName(n))
+	private val nParsedFullNames = n.fullNames.map(n => PersonNameParser.parseFullName(n))
 
 	// ** if the prefix is populated in more than one input, pick a random one.  Better: emit warning, choose best (?)
 	override val prefixes       = nParsedFullNames.flatMap(_.prefixes)

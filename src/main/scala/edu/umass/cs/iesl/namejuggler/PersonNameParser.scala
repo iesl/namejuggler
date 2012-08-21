@@ -60,7 +60,7 @@ object PersonNameParser extends Logging {
         val f: Option[NonemptyString] = lastToken
         (h, d + f.get, r)
       }
-      else if (!separator.contains(",") && !remainder.contains(",") && isDegree(lastToken)) {
+      else if ((!separator.contains(",")) && (!remainder.contains(",")) && isDegree(lastToken)) {
         logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
         val (h, d, r) = stripSuffixes(remainder)
         val f: Option[NonemptyString] = lastToken
@@ -147,10 +147,13 @@ object PersonNameParser extends Logging {
         val rawGivenNames = givenR.reverse
         if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
           // interpret solid caps as initials
-          rawGivenNames(0).s.split("").toSeq
+          rawGivenNames(0).stripPunctuation.split("").filter(_.nonEmpty).toSeq.map(_ + ".")
         }
         else {
-          rawGivenNames
+          rawGivenNames.map({
+            case i if (i.length == 1) => i + "."
+            case i => i
+          })
         }
       }
     }

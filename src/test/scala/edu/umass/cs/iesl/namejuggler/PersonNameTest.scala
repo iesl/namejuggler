@@ -13,7 +13,14 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   import StringUtils._
 
 	private def assertCanonicalCompatible(a: String, b: String) {
-		assert(PersonNameWithDerivations(a).toCanonical compatibleWith PersonNameWithDerivations(b).toCanonical)
+    val acan = PersonNameWithDerivations(a).toCanonical
+    val bcan = PersonNameWithDerivations(b).toCanonical
+    val result = acan compatibleWith bcan
+    if (!result)
+    {
+      logger.error(acan + " not compatible with " + bcan)
+    }
+    assert(result)
 	}
 
   /*
@@ -22,8 +29,15 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }*/
 
   private def assertNotCanonicalCompatible(a: String, b: String) {
-		assert(!(PersonNameWithDerivations(a).toCanonical compatibleWith PersonNameWithDerivations(b).toCanonical))
-	}
+    val acan = PersonNameWithDerivations(a).toCanonical
+    val bcan = PersonNameWithDerivations(b).toCanonical
+    val result = acan compatibleWith bcan
+    if (result)
+    {
+      logger.error(acan + " erroneously compatible with " + bcan)
+    }
+    assert(!result)
+  }
 
   test("Normally formatted simple names are parsed as expected") {
     val inferred = PersonNameWithDerivations("Kermit T. Frog").inferFully
@@ -31,6 +45,22 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
     assert(inferred.bestFullName === "Kermit T. Frog".opt)
+  }
+
+  test("Initial-formatted simple names with periods are parsed as expected") {
+    val inferred = PersonNameWithDerivations("K. T. Frog").inferFully
+    assert(inferred.givenNames === Seq("K.".n, "T.".n))
+    assert(inferred.surNames === Set("Frog".n))
+    assert(inferred.allInitials === "K. T. F.".opt)
+    assert(inferred.bestFullName === "K. T. Frog".opt)
+  }
+
+  test("Initial-formatted simple names without periods are parsed as expected") {
+    val inferred = PersonNameWithDerivations("KT Frog").inferFully
+    assert(inferred.givenNames === Seq("K.".n, "T.".n))
+    assert(inferred.surNames === Set("Frog".n))
+    assert(inferred.allInitials === "K. T. F.".opt)
+    assert(inferred.bestFullName === "K. T. Frog".opt)
   }
 
 
@@ -92,7 +122,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
   test("Multiple suffixes not supported without multiple commas 1") {assertNotCanonicalCompatible("John Smith", "John Smith, MD PhD")}
 
-  test("Multiple suffixes not supported without multiple commas 2") {assertNotCanonicalCompatible("John Smith", "John Smith MD PhD")}
+  test("Multiple suffixes supported without multiple commas") {assertCanonicalCompatible("John Smith", "John Smith MD PhD")}
 
 	test("First names must match") {assertNotCanonicalCompatible("John Smith", "Jane Smith")}
 
