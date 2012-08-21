@@ -1,8 +1,7 @@
 package edu.umass.cs.iesl.namejuggler
 
 import edu.umass.cs.iesl.scalacommons.NonemptyString
-import edu.umass.cs.iesl.scalacommons.StringUtils.emptyStringToNone
-import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
+import edu.umass.cs.iesl.scalacommons.StringUtils._
 import scala.MatchError
 import com.weiglewilczek.slf4s.Logging
 import annotation.tailrec
@@ -41,6 +40,7 @@ object PersonNameParser extends Logging {
     try {
       val splitLast(remainder, separator, lastToken) = s.trim
       if (isHereditySuffix(lastToken)) {
+        logger.debug("Found heredity suffix in '" + s + "': '" + lastToken + "'")
         val (h, d, r) = stripSuffixes(remainder)
         val f: Option[NonemptyString] = lastToken
         if (h.nonEmpty) {
@@ -101,10 +101,10 @@ object PersonNameParser extends Logging {
         // exactly one comma:
         // the Frog, Kermit Kalman
         new PersonNameWithDerivations {
-          override val givenNames: Seq[NonemptyString] = coreToks(1).flatMap(emptyStringToNone)
+          override val givenNames: Seq[NonemptyString] = coreToks(1).toSeq
 
           // declare a single complete surname for now.  If there are several names, they should get expanded later.
-          override val surNames: Set[NonemptyString] = emptyStringToNone(coreToks(0).mkString(" ")).toSet
+          override val surNames: Set[NonemptyString] = coreToks(0).mkString(" ").opt.toSet
         }
       }
       else {
@@ -140,16 +140,14 @@ object PersonNameParser extends Logging {
 
     val (givenR, sur) = splitOnCondition((s: String) => s.isAllLowerCase)(Nil, nameTokens.toList)
 
-
-
     new PersonName {
-      override val surNames: Set[NonemptyString] = emptyStringToNone(sur.mkString(" ")).toSet
+      override val surNames: Set[NonemptyString] = sur.mkString(" ").opt.toSet
       //emptyStringToNone(nameTokens.last).toSet
       override val givenNames: Seq[NonemptyString] = {
-        val rawGivenNames = givenR.reverse.flatMap(emptyStringToNone)
-        if (rawGivenNames.size == 1 && rawGivenNames(0).s.isAllUpperCase && rawGivenNames(0).s.length < 4) {
+        val rawGivenNames = givenR.reverse
+        if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
           // interpret solid caps as initials
-          rawGivenNames(0).s.split("").flatMap(emptyStringToNone)
+          rawGivenNames(0).s.split("").toSeq
         }
         else {
           rawGivenNames

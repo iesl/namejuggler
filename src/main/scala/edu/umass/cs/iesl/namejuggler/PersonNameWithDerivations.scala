@@ -163,7 +163,7 @@ class CanonicalPersonNameWithDerivations(n: CanonicalPersonName) extends Canonic
   override lazy val preferredFullName: Option[NonemptyString] = {
     val prefixString: Option[NonemptyString] = prefixes.mkString(" ").trim
     val givenString: Option[NonemptyString] = givenNames.mkString(" ").trim
-    val degreesString: Option[NonemptyString] = degrees.map(", " + _).mkString(" ").trim
+    val degreesString: Option[NonemptyString] = degrees.map(", " + _).mkString("").trim
     val rebuiltFullName: Option[NonemptyString] = Seq(prefixString, givenString, nickNamesInQuotes, longestSurName,
       hereditySuffix).flatten.mkString(" ").trim + degreesString.getOrElse("")
     rebuiltFullName

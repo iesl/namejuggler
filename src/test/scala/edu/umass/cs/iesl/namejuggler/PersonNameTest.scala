@@ -10,7 +10,7 @@ import StringUtils._
  * @version $Id$
  */
 class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
-  import StringUtils.enrichString
+  import StringUtils._
 
 	private def assertCanonicalCompatible(a: String, b: String) {
 		assert(PersonNameWithDerivations(a).toCanonical compatibleWith PersonNameWithDerivations(b).toCanonical)
@@ -25,28 +25,51 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 		assert(!(PersonNameWithDerivations(a).toCanonical compatibleWith PersonNameWithDerivations(b).toCanonical))
 	}
 
+  test("Normally formatted simple names are parsed as expected") {
+    val inferred = PersonNameWithDerivations("Kermit T. Frog").inferFully
+    assert(inferred.givenNames === Seq("Kermit".n, "T.".n))
+    assert(inferred.surNames === Set("Frog".n))
+    assert(inferred.allInitials === "K. T. F.".opt)
+    assert(inferred.bestFullName === "Kermit T. Frog".opt)
+  }
+
+
+  test("Normally formatted complex names are parsed as expected") {
+    val inferred = PersonNameWithDerivations("Dr. Kermit T. Frog III, MD, Ph.D.").inferFully
+    assert(inferred.givenNames === Seq("Kermit".n, "T.".n))
+    assert(inferred.surNames === Set("Frog".n))
+    assert(inferred.allInitials === "K. T. F.".opt)
+    assert(inferred.prefixes ===  Set("Dr.".n))
+    assert(inferred.degrees === Set("MD".n,"Ph.D.".n))
+    assert(inferred.hereditySuffix === "III".opt)
+    assert(inferred.bestFullName === "Dr. Kermit T. Frog III, MD, Ph.D.".opt)
+  }
+
 	test("Names invert without space") {
-		                                   assert(PersonNameWithDerivations("Smith,John").inferFully.bestFullName equals emptyStringToNone("John Smith"))
+		                                   assert(PersonNameWithDerivations("Smith,John").inferFully.bestFullName === "John Smith".opt)
 	                                   }
 	test("Names invert with space") {
-		                                assert(PersonNameWithDerivations("Smith, John").inferFully.bestFullName equals emptyStringToNone("John Smith"))
+		                                assert(PersonNameWithDerivations("Smith, John").inferFully.bestFullName === "John Smith".opt)
 	                                }
+
   test("Names invert with middle initial") {
-    assert(PersonNameWithDerivations("Smith, John Q.").inferFully.bestFullName equals emptyStringToNone("John Q. Smith"))
+    assert(PersonNameWithDerivations("Smith, John Q.").inferFully.bestFullName === "John Q. Smith".opt)
   }
 	test("Names don't invert with zero commas") {
-		                                            assert(PersonNameWithDerivations("John Smith").inferFully.bestFullName equals
-		                                                   emptyStringToNone("John Smith"))
+		                                            assert(PersonNameWithDerivations("John Smith").inferFully.bestFullName ===
+		                                                   "John Smith".opt)
 	                                            }
 	test("Names don't invert with two commas, easy degree") {
-		                                           assert(PersonNameWithDerivations("Smith, John, Ph.D.").inferFully.bestFullName equals
-		                                                  emptyStringToNone("John Smith, Ph.D."))
+		                                           assert(PersonNameWithDerivations("Smith, John, Ph.D.").inferFully.bestFullName ===
+		                                                  "John Smith, Ph.D.".opt)
 	                                           }
 
 	test("Names don't invert with two commas, hard degree") {
-		                                           assert(PersonNameWithDerivations("Smith, John, PhD").inferFully.bestFullName equals
-		                                                  emptyStringToNone("John Smith, PhD"))
+		                                           assert(PersonNameWithDerivations("Smith, John, PhD").inferFully.bestFullName ===
+		                                                  "John Smith, PhD".opt)
 	                                           }
+
+  test("inferFully keeps names intact") { "Kermit T. Frog"}
 
 	test("Names may match fully") {assertCanonicalCompatible("John Smith", "John Smith")}
 

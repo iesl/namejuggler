@@ -131,14 +131,14 @@ trait CanonicalPersonName extends PersonName with Logging {
 	}
 
   private def expandSurname(s: NonemptyString): Set[NonemptyString] = {
-    import StringUtils.enrichString
+    import StringUtils._
     val deAccented = NonemptyString(s.s.deAccent)
     val base : Set[String] = if (deAccented == s) {
       Set(s)
     } else {
       Set(s, deAccented)
     }
-    base.map(_.toLowerCase).flatMap(removeParticles).flatMap(splitHyphenated).flatMap(emptyStringToNone)
+    base.map(_.toLowerCase).flatMap(removeParticles).flatMap(splitHyphenated)
   }
 
   private def removeParticles(s: String): Set[String] = {
@@ -152,15 +152,15 @@ trait CanonicalPersonName extends PersonName with Logging {
 
 
   private def compatibleNameSet(a: Seq[NonemptyString], b: Seq[NonemptyString]): Boolean = {
-		lazy val aa = a.map(_.toLowerCase).flatMap(emptyStringToNone(_))
-		lazy val bb = b.map(_.toLowerCase).flatMap(emptyStringToNone(_))
+		lazy val aa = a.map(_.toLowerCase)
+		lazy val bb = b.map(_.toLowerCase)
 
 		// At least one given name or nickname matches fully
 		lazy val matching = aa.intersect(bb).nonEmpty
 
 		// if a given name is provided only as an initial, see if a full given name or initial from the other name matches
-		lazy val aInitialsOnly: Seq[String] = aa.filter(_.s.length == 1).map(unwrapNonemptyString)
-		lazy val bInitialsOnly: Seq[String] = bb.filter(_.s.length == 1).map(unwrapNonemptyString)
+		lazy val aInitialsOnly: Seq[String] = aa.filter(_.s.length == 1)
+		lazy val bInitialsOnly: Seq[String] = bb.filter(_.s.length == 1)
 		lazy val aAsInitials: Seq[String] = aa.map(x => x.s.head.toString)
 		lazy val bAsInitials: Seq[String] = bb.map(x => x.s.head.toString)
 

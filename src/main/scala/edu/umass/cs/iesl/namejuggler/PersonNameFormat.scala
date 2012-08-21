@@ -4,35 +4,40 @@ import com.weiglewilczek.slf4s.Logging
 
 
 object PersonNameFormat extends Logging {
-	// http://notes.ericwillis.com/2009/11/common-name-prefixes-titles-and-honorifics/
-	// ** add map from expanded versions, e.g. Professor, Senator, etc.
-	// ** Add all manner of religious prefixes, e.g. "very rev", "right rev", "rt. rev", "rt. rev dom", etc.
-	private val validPrefixes =
-		Seq("Ms", "Miss", "Mrs", "Mr", "Master", "Rev", "Fr", "Dr", "Atty", "Prof", "Hon", "Pres", "Gov", "Coach", "Ofc", "Msgr", "Sr", "Br", "Supt", "Rep",
-		    "Sen", "Amb", "Treas", "Sec", "Pvt", "Cpl", "Sgt", "Adm", "Maj", "Capt", "Cmdr", "Lt", "Lt Col", "Col", "Gen")
+  // http://notes.ericwillis.com/2009/11/common-name-prefixes-titles-and-honorifics/
+  // ** add map from expanded versions, e.g. Professor, Senator, etc.
+  // ** Add all manner of religious prefixes, e.g. "very rev", "right rev", "rt. rev", "rt. rev dom", etc.
+  private val validPrefixes =
+    Set("Ms.", "Miss", "Mrs.", "Mr.", "Master", "Rev.", "Fr.", "Dr.", "Atty.", "Prof.", "Hon.", "Pres.", "Gov.", "Coach", "Ofc.", "Msgr.", "Sr.", "Br.", "Supt.", "Rep.",
+      "Sen.", "Amb.", "Treas.", "Sec.", "Pvt.", "Cpl.", "Sgt.", "Adm.", "Maj.", "Capt.", "Cmdr.", "Lt.", "Lt. Col.", "Col.", "Gen.")
 
-	// ** don't bother listing these-- too many possibilities
-	// http://en.wikipedia.org/wiki/List_of_post-nominal_letters
-	//private val validDegrees =
-	//	Seq("M.D.","Ph.D")
-	private val validHereditySuffixes =
-		Seq("Jr.", "Sr.", "II", "III", "IV")
+  private val allValidPrefixes = {
+    import edu.umass.cs.iesl.scalacommons.StringUtils._
+    validPrefixes ++ validPrefixes.map(_.removePunctuation)
+  }
 
-	def isPrefix(s: String): Boolean = {
-		s.trim.nonEmpty && (validPrefixes.contains(s))
-	}
+  // ** don't bother listing these-- too many possibilities
+  // http://en.wikipedia.org/wiki/List_of_post-nominal_letters
+  //private val validDegrees =
+  //	Seq("M.D.","Ph.D")
+  private val validHereditySuffixes =
+    Seq("Jr.", "Sr.", "II", "III", "IV")
 
-	def isHereditySuffix(s: String): Boolean = {
-		s.trim.nonEmpty && (validPrefixes.contains(s))
-	}
+  def isPrefix(s: String): Boolean = {
+    s.trim.nonEmpty && (allValidPrefixes.contains(s))
+  }
 
-	def isDegree(s: String): Boolean = {
-		// ** simplistic
-		import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
-		val result = s.nonEmpty && (s.filter(_ == '.').nonEmpty || s.isAllUpperCase)
-		//logger.debug("Checking Degree:" + s + " : " + s.nonEmpty + " && ( " + s.filter(_ == '.').nonEmpty + " || " + isAllCaps(s) + ")")
-		result
-	}
+  def isHereditySuffix(s: String): Boolean = {
+    s.trim.nonEmpty && (validHereditySuffixes.contains(s))
+  }
+
+  def isDegree(s: String): Boolean = {
+    // ** simplistic
+    import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
+    val result = s.nonEmpty && (s.filter(_ == '.').nonEmpty || s.isAllUpperCase)
+    //logger.debug("Checking Degree:" + s + " : " + s.nonEmpty + " && ( " + s.filter(_ == '.').nonEmpty + " || " + isAllCaps(s) + ")")
+    result
+  }
 
 }
 
