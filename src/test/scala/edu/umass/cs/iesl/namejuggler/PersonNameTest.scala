@@ -99,6 +99,32 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 		                                                  "John Smith, PhD".opt)
 	                                           }
 
+  test("Inverted single first initial without period not interpreted as degree") {
+    assert(PersonNameWithDerivations("Smith, J").inferFully.firstName ===
+      "J.".opt)
+  }
+  test("Inverted single first initial with period not interpreted as degree") {
+    assert(PersonNameWithDerivations("Smith, J.").inferFully.firstName ===
+      "J.".opt)
+  }
+
+  test("Inverted dual first initial without period mashed not interpreted as degree") {
+    assert(PersonNameWithDerivations("Smith, JA").inferFully.firstName ===
+      "J.".opt)
+  }
+  test("Inverted dual first initial without period unmashed not interpreted as degree") {
+    assert(PersonNameWithDerivations("Smith, J A").inferFully.firstName ===
+      "J.".opt)
+  }
+  test("Inverted dual first initial with period mashed not interpreted as degree") {
+    assert(PersonNameWithDerivations("Smith, J.A.").inferFully.firstName ===
+      "J.".opt)
+  }
+  test("Inverted dual first initial with period unmashed not interpreted as degree") {
+    assert(PersonNameWithDerivations("Smith, J. A.").inferFully.firstName ===
+      "J.".opt)
+  }
+
   test("inferFully keeps names intact") { "Kermit T. Frog"}
 
 	test("Names may match fully") {assertCanonicalCompatible("John Smith", "John Smith")}
@@ -120,9 +146,9 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
   test("Multiple suffixes supported with multiple commas, inverted") {assertCanonicalCompatible("John Smith", "Smith, John, MD, PhD")}
 
-  test("Multiple suffixes not supported without multiple commas 1") {assertNotCanonicalCompatible("John Smith", "John Smith, MD PhD")}
+  test("Multiple suffixes supported with single commas") {assertCanonicalCompatible("John Smith", "John Smith, MD PhD")}
 
-  test("Multiple suffixes supported without multiple commas") {assertCanonicalCompatible("John Smith", "John Smith MD PhD")}
+  test("Multiple suffixes supported with no commas") {assertCanonicalCompatible("John Smith", "John Smith MD PhD")}
 
 	test("First names must match") {assertNotCanonicalCompatible("John Smith", "Jane Smith")}
 

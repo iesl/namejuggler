@@ -19,7 +19,7 @@ object PersonNameFormat extends Logging {
   // ** don't bother listing these-- too many possibilities
   // http://en.wikipedia.org/wiki/List_of_post-nominal_letters
   // http://en.wikipedia.org/wiki/Academic_degrees
-  private val validDegrees = Seq("M.D.","Ph.D")
+  private val validDegrees = Seq("M.D.", "Ph.D")
 
   private val allValidDegrees = {
     import edu.umass.cs.iesl.scalacommons.StringUtils._
@@ -37,12 +37,26 @@ object PersonNameFormat extends Logging {
     s.trim.nonEmpty && (validHereditySuffixes.contains(s))
   }
 
-  def isDegree(s: String): Boolean = {
-    // ** simplistic
+  /**
+   * We can't be sure "MD" is a degree, because it could be the initials for Mark Dobson.
+   * Conversely we can't be sure that a real degree conforms to any standard of punctuation or capitalization.
+   * Someone might even be referred to as "Jim Beam, Brewer" in which case "Brewer" is a degree-like suffix.
+   *
+   * @param s
+   * @return
+   */
+  def likelyDegree(s: String, containsLowerCase: Boolean): Boolean = {
     import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
-    val result = s.trim.nonEmpty && (allValidDegrees.contains(s) || s.filter(_ == '.').nonEmpty || s.isAllUpperCase)
-    //logger.debug("Checking Degree:" + s + " : " + s.nonEmpty + " && ( " + s.filter(_ == '.').nonEmpty + " || " + isAllCaps(s) + ")")
-    result
+
+    if (s.stripPunctuation.size < 2) {
+      false
+    }
+    else {
+      val stringMatch = allValidDegrees.contains(s)
+      val caseSuggestive = s.isAllUpperCase && containsLowerCase
+
+      stringMatch || caseSuggestive
+    }
   }
 
 }

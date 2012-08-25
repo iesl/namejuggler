@@ -36,12 +36,12 @@ object PersonNameParser extends Logging {
     }
   }
 
-  def stripSuffixes(s: String): (Option[NonemptyString], Set[NonemptyString], String) = {
+  def stripSuffixes(s: String, containsLowerCase: Boolean): (Option[NonemptyString], Set[NonemptyString], String) = {
     try {
       val splitLast(remainder, separator, lastToken) = s.trim
       if (isHereditySuffix(lastToken)) {
         logger.debug("Found heredity suffix in '" + s + "': '" + lastToken + "'")
-        val (h, d, r) = stripSuffixes(remainder)
+        val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
         val f: Option[NonemptyString] = lastToken
         if (h.nonEmpty) {
           throw new PersonNameParsingException("More than one heredity suffix: " + s)
@@ -53,20 +53,47 @@ object PersonNameParser extends Logging {
       // it can be hard to distinguish degrees from middle initials.
       // Is Smith, John RN == John R. N. Smith, or John Smith, RN?
       // we interpret that case as middle initials, but Smith, John, RN as a degree.
+      // what about Smith, JR ?
 
-      else if (separator.contains(",") && (remainder.contains(",") || isDegree(lastToken))) {
-        logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
-        val (h, d, r) = stripSuffixes(remainder)
-        val f: Option[NonemptyString] = lastToken
-        (h, d + f.get, r)
+      else {
+        def acceptDegree: (Option[NonemptyString], Set[NonemptyString], String) = {
+
+          logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
+          val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
+          val f: Option[NonemptyString] = lastToken
+          (h, d + f.get, r)
+
+        }
+        def rejectDegree: (Option[NonemptyString], Set[NonemptyString], String) = (None, Set.empty, s)
+
+        val lastNameOnlyBeforeComma = ! remainder.trim.takeWhile(_ != ',').contains(" ")
+        val hasFirstName = remainder.contains(" ") && ! lastNameOnlyBeforeComma
+
+        (hasFirstName, remainder.contains(","), separator.contains(",")) match {
+          // if there are two commas, anything after the second is a degree.
+          case (_, true, true) => acceptDegree  // Smith, John, MD
+
+          // if there is a first name and one comma, anything after the comma is a degree
+          case (true, false, true) => acceptDegree //John Smith, MD
+          case (true, true, false) => acceptDegree // John Smith, MD PhD.  Smith, John Q.
+
+          // if there is a first name and no comma, then the degree might be detected based on capitalization
+          case (true, false, false) if likelyDegree(lastToken, containsLowerCase) => acceptDegree // John Smith MD
+
+          // if there is no first name and no comma, then any lastToken could be an inverted given name or initials,
+          // e.g. Smith JA, so the only way to detect a degree is by lexicon or maybe a pronouncability measure
+          case (false, false, false) => rejectDegree  // Smith JA
+
+          // if there is no first name but one comma, it's the same deal
+          case (false, false, true) => rejectDegree // Smith, JA.   Doesn't catch Smith, M.D. but who writes that?
+
+          // no first name, a comma in the remainder, and no comma in the separator
+          case (false, true, false) if likelyDegree(lastToken, containsLowerCase) => acceptDegree // Smith, John MD or Smith, John Q.
+
+          case _ => rejectDegree
+        }
       }
-      else if ((!separator.contains(",")) && (!remainder.contains(",")) && isDegree(lastToken)) {
-        logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
-        val (h, d, r) = stripSuffixes(remainder)
-        val f: Option[NonemptyString] = lastToken
-        (h, d + f.get, r)
-      }
-      else (None, Set.empty, s)
+
     }
     catch {
       case e: MatchError => (None, Set.empty, s)
@@ -83,7 +110,8 @@ object PersonNameParser extends Logging {
   // is Jones, M.D. => Michael Douglas Jones or Dr. Jeremiah Jones, MD?  Probably the former. But MD Jones, MD is Dr. Michael Douglas Jones, M.D.
   def parseFullName(s: String): PersonName = {
     val (parsedPrefixes: Set[NonemptyString], noPrefixes: String) = stripPrefixes(s)
-    val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes)
+    val containsLowerCase = !s.isAllUpperCase
+    val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes,containsLowerCase)
 
     val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
 
@@ -101,7 +129,7 @@ object PersonNameParser extends Logging {
         // exactly one comma:
         // the Frog, Kermit Kalman
         new PersonNameWithDerivations {
-          override val givenNames: Seq[NonemptyString] = coreToks(1).toSeq
+          override val givenNames: Seq[NonemptyString] = massageGivenNames(coreToks(1).toSeq)
 
           // declare a single complete surname for now.  If there are several names, they should get expanded later.
           override val surNames: Set[NonemptyString] = coreToks(0).mkString(" ").opt.toSet
@@ -131,6 +159,22 @@ object PersonNameParser extends Logging {
 
   class PersonNameParsingException(s: String) extends Exception(s)
 
+
+  private def massageGivenNames(maybePunct : Seq[String]) : Seq[String] =
+  {
+    val rawGivenNames = maybePunct.map(_.maskPunctuation).flatMap(_.split(" "))
+    if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
+      // interpret solid caps as initials
+      rawGivenNames(0).stripPunctuation.split("").filter(_.nonEmpty).toSeq.map(_ + ".")
+    }
+    else {
+      rawGivenNames.map({
+        case i if (i.length == 1) => i + "."
+        case i => i
+      })
+    }
+  }
+
   private def parseUninvertedCore(nameTokens: Array[String]): PersonName = {
     // OK this is the hard part.  No commas or other structure, so we have to figure out which part is which.
     // ** assume case sensitive for now to help identify the "prelast" particle
@@ -144,17 +188,8 @@ object PersonNameParser extends Logging {
       override val surNames: Set[NonemptyString] = sur.mkString(" ").opt.toSet
       //emptyStringToNone(nameTokens.last).toSet
       override val givenNames: Seq[NonemptyString] = {
-        val rawGivenNames = givenR.reverse
-        if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
-          // interpret solid caps as initials
-          rawGivenNames(0).stripPunctuation.split("").filter(_.nonEmpty).toSeq.map(_ + ".")
-        }
-        else {
-          rawGivenNames.map({
-            case i if (i.length == 1) => i + "."
-            case i => i
-          })
-        }
+        val maybePunct = givenR.reverse
+        massageGivenNames(maybePunct)
       }
     }
   }
