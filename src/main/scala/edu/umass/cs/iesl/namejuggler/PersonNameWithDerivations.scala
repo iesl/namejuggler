@@ -145,7 +145,7 @@ class CanonicalPersonNameWithDerivations(n: CanonicalPersonName) extends Canonic
   // ** lots not implemented and generally broken
   // then derive the remaining fields
   override lazy val firstName: Option[NonemptyString] = n.givenNames.headOption
-  override lazy val middleNames: Seq[NonemptyString] = n.givenNames.tail
+  override lazy val middleNames: Seq[NonemptyString] = firstName.map(x=>n.givenNames.tail).getOrElse(Nil)
   override lazy val firstInitial: Option[NonemptyString] = firstName.map(x => NonemptyString(x.s(0) + "."))
   override lazy val middleInitials: Option[NonemptyString] = middleNames.map(_.s(0) + ".").mkString(" ").trim
 
