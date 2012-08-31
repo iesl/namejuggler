@@ -33,12 +33,21 @@ object PersonNameFormat extends Logging {
   private val validHereditySuffixes =
     Seq("Jr.", "Sr.", "II", "III", "IV")
 
+  // ** add more
+  private val validSurnameParticles =
+    Seq("van","von","de","du","la","del")
+
   def isPrefix(s: String): Boolean = {
     s.trim.nonEmpty && (allValidPrefixes.contains(s.toLowerCase))
   }
 
   def isHereditySuffix(s: String): Boolean = {
     s.trim.nonEmpty && (validHereditySuffixes.contains(s))
+  }
+
+
+  def isSurnameParticle(s: String): Boolean = {
+    s.trim.nonEmpty && (validSurnameParticles.contains(s))
   }
 
   /**

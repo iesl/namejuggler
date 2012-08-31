@@ -100,7 +100,9 @@ object PersonNameParser extends Logging {
     }
   }
 
-  def fixCaps(s: String)=if(s.isAllLowerCase || s.isAllUpperCase) s.toLowerCase.capitalize else s
+  def fixCaps(s: String)=if(s.isMixedCase) s else s.toLowerCase.capitalize
+
+  def fixCapsExceptParticles(s: String)=if(isSurnameParticle(s)) s.toLowerCase else if(s.isMixedCase) s else s.toLowerCase.capitalize
 
   // Kermit Kalman the Frog, Ph.D., F.R.S.
   // the Frog, Kermit Kalman, Ph.D., F.R.S.
@@ -112,7 +114,7 @@ object PersonNameParser extends Logging {
   // is Jones, M.D. => Michael Douglas Jones or Dr. Jeremiah Jones, MD?  Probably the former. But MD Jones, MD is Dr. Michael Douglas Jones, M.D.
   def parseFullName(s: String): PersonName = {
     val (parsedPrefixes: Set[NonemptyString], noPrefixes: String) = stripPrefixes(s)
-    val containsLowerCase = !s.isAllUpperCase
+    val containsLowerCase = s.containsLowerCase
     val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes, containsLowerCase)
 
     val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
@@ -188,7 +190,7 @@ object PersonNameParser extends Logging {
     val (givenR, sur) = splitOnCondition((s: String) => s.isAllLowerCase)(Nil, nameTokens.toList)
 
     new PersonName {
-      override val surNames: Set[NonemptyString] = fixCaps(sur.mkString(" ")).opt.toSet
+      override val surNames: Set[NonemptyString] = sur.map(fixCapsExceptParticles(_)).mkString(" ").opt.toSet
       //emptyStringToNone(nameTokens.last).toSet
       override val givenNames: Seq[NonemptyString] = {
         val maybePunct = givenR.reverse
