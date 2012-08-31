@@ -60,18 +60,18 @@ object PersonNameParser extends Logging {
 
           logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
           val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
-          val f: Option[NonemptyString] = lastToken
+          val f: Option[NonemptyString] = fixDegree(lastToken)
           (h, d + f.get, r)
 
         }
         def rejectDegree: (Option[NonemptyString], Set[NonemptyString], String) = (None, Set.empty, s)
 
-        val lastNameOnlyBeforeComma = ! remainder.trim.takeWhile(_ != ',').contains(" ")
-        val hasFirstName = remainder.contains(" ") && ! lastNameOnlyBeforeComma
+        val lastNameOnlyBeforeComma = !remainder.trim.takeWhile(_ != ',').contains(" ")
+        val hasFirstName = remainder.contains(" ") && !lastNameOnlyBeforeComma
 
         (hasFirstName, remainder.contains(","), separator.contains(",")) match {
           // if there are two commas, anything after the second is a degree.
-          case (_, true, true) => acceptDegree  // Smith, John, MD
+          case (_, true, true) => acceptDegree // Smith, John, MD
 
           // if there is a first name and one comma, anything after the comma is a degree
           case (true, false, true) => acceptDegree //John Smith, MD
@@ -82,7 +82,7 @@ object PersonNameParser extends Logging {
 
           // if there is no first name and no comma, then any lastToken could be an inverted given name or initials,
           // e.g. Smith JA, so the only way to detect a degree is by lexicon or maybe a pronouncability measure
-          case (false, false, false) => rejectDegree  // Smith JA
+          case (false, false, false) => rejectDegree // Smith JA
 
           // if there is no first name but one comma, it's the same deal
           case (false, false, true) => rejectDegree // Smith, JA.   Doesn't catch Smith, M.D. but who writes that?
@@ -100,6 +100,8 @@ object PersonNameParser extends Logging {
     }
   }
 
+  def fixCaps(s: String)=if(s.isAllLowerCase || s.isAllUpperCase) s.toLowerCase.capitalize else s
+
   // Kermit Kalman the Frog, Ph.D., F.R.S.
   // the Frog, Kermit Kalman, Ph.D., F.R.S.
   // the Frog, Ph.D., F.R.S., Kermit Kalman  // ** this never happens?
@@ -111,7 +113,7 @@ object PersonNameParser extends Logging {
   def parseFullName(s: String): PersonName = {
     val (parsedPrefixes: Set[NonemptyString], noPrefixes: String) = stripPrefixes(s)
     val containsLowerCase = !s.isAllUpperCase
-    val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes,containsLowerCase)
+    val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes, containsLowerCase)
 
     val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
 
@@ -131,8 +133,9 @@ object PersonNameParser extends Logging {
         new PersonNameWithDerivations {
           override val givenNames: Seq[NonemptyString] = massageGivenNames(coreToks(1).toSeq)
 
+
           // declare a single complete surname for now.  If there are several names, they should get expanded later.
-          override val surNames: Set[NonemptyString] = coreToks(0).mkString(" ").opt.toSet
+          override val surNames: Set[NonemptyString] = fixCaps(coreToks(0).mkString(" ")).opt.toSet
         }
       }
       else {
@@ -141,7 +144,7 @@ object PersonNameParser extends Logging {
     }
 
     val extraName = new PersonName() {
-      override val prefixes: Set[NonemptyString] = parsedPrefixes
+      override val prefixes: Set[NonemptyString] = parsedPrefixes.map(_.toLowerCase.capitalize)
       override val hereditySuffix = parsedHereditySuffix
       override val degrees = parsedDegrees
     }
@@ -160,10 +163,9 @@ object PersonNameParser extends Logging {
   class PersonNameParsingException(s: String) extends Exception(s)
 
 
-  private def massageGivenNames(maybePunct : Seq[String]) : Seq[String] =
-  {
+  private def massageGivenNames(maybePunct: Seq[String]): Seq[String] = {
     val rawGivenNames = maybePunct.map(_.maskPunctuation).flatMap(_.split(" "))
-    if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
+    val result = if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
       // interpret solid caps as initials
       rawGivenNames(0).stripPunctuation.split("").filter(_.nonEmpty).toSeq.map(_ + ".")
     }
@@ -173,6 +175,7 @@ object PersonNameParser extends Logging {
         case i => i
       })
     }
+    result.map(fixCaps(_))
   }
 
   private def parseUninvertedCore(nameTokens: Array[String]): PersonName = {
@@ -185,7 +188,7 @@ object PersonNameParser extends Logging {
     val (givenR, sur) = splitOnCondition((s: String) => s.isAllLowerCase)(Nil, nameTokens.toList)
 
     new PersonName {
-      override val surNames: Set[NonemptyString] = sur.mkString(" ").opt.toSet
+      override val surNames: Set[NonemptyString] = fixCaps(sur.mkString(" ")).opt.toSet
       //emptyStringToNone(nameTokens.last).toSet
       override val givenNames: Seq[NonemptyString] = {
         val maybePunct = givenR.reverse

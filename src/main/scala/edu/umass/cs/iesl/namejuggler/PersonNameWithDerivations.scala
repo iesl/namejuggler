@@ -38,7 +38,7 @@ object PersonNameWithDerivations {
       override lazy val allInitials = OptionUtils.mergeWarn(primary.allInitials, secondary.allInitials)
 
       override lazy val firstName = OptionUtils.mergeWarn(primary.firstName, secondary.firstName)
-      override lazy val middleNames = SeqUtils.mergeWarn(primary.middleNames, secondary.middleNames)
+      override lazy val middleNames : scala.Seq[NonemptyString]= SeqUtils.mergeWarn[NonemptyString,Seq[NonemptyString]](primary.middleNames, secondary.middleNames)
 
       // various representations of full name may be present in a single mention (e.g., a metadata xml file)
       override lazy val fullNames = primary.fullNames ++ secondary.fullNames

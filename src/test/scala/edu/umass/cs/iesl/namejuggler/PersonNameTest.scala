@@ -70,9 +70,22 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
     assert(inferred.prefixes ===  Set("Dr.".n))
-    assert(inferred.degrees === Set("MD".n,"Ph.D.".n))
+    assert(inferred.degrees === Set("M.D.".n,"Ph.D.".n))
     assert(inferred.hereditySuffix === "III".opt)
-    assert(inferred.bestFullName === "Dr. Kermit T. Frog III, MD, Ph.D.".opt)
+    assert(inferred.bestFullName === "Dr. Kermit T. Frog III, M.D., Ph.D.".opt)
+  }
+
+
+
+  test("Solid-caps formatted complex names are parsed as expected") {
+    val inferred = PersonNameWithDerivations("DR. KERMIT T. FROG III, MD, PHD").inferFully
+    assert(inferred.givenNames === Seq("Kermit".n, "T.".n))
+    assert(inferred.surNames === Set("Frog".n))
+    assert(inferred.allInitials === "K. T. F.".opt)
+    assert(inferred.prefixes ===  Set("Dr.".n))
+    assert(inferred.degrees === Set("M.D.".n,"Ph.D.".n))
+    assert(inferred.hereditySuffix === "III".opt)
+    assert(inferred.bestFullName === "Dr. Kermit T. Frog III, M.D., Ph.D.".opt)
   }
 
 	test("Names invert without space") {
@@ -96,8 +109,13 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
 	test("Names don't invert with two commas, hard degree") {
 		                                           assert(PersonNameWithDerivations("Smith, John, PhD").inferFully.bestFullName ===
-		                                                  "John Smith, PhD".opt)
+		                                                  "John Smith, Ph.D.".opt)
 	                                           }
+
+  test("Names don't invert with two commas, hard degree, caps") {
+    assert(PersonNameWithDerivations("SMITH, JOHN, PhD").inferFully.bestFullName ===
+      "John Smith, Ph.D.".opt)
+  }
 
   test("Inverted single first initial without period not interpreted as degree") {
     assert(PersonNameWithDerivations("Smith, J").inferFully.firstName ===
@@ -192,6 +210,8 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   test("Names are compatible with deaccented versions") { assertCanonicalCompatible("Ana Durić", "Ana Duric")}
 
   test("Names with particles and accents are compatible with simplified variant") {assertCanonicalCompatible("Jacqueline du Pré", "Jacqueline Pre")}
+
+  test("Solid-caps names are compatible with normal variant") {assertCanonicalCompatible("KERMIT THE FROG", "Kermit T. Frog")}
 
 
 //  test("With inference, ames with particles are compatible with names missing particles") {assertInferredCompatible("Jacqueline du Pre", "Jacqueline Pre")}
