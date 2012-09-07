@@ -1,7 +1,7 @@
 package edu.umass.cs.iesl.namejuggler
 
 import edu.umass.cs.iesl.scalacommons.StringUtils._
-import edu.umass.cs.iesl.scalacommons.{StringUtils, OptionUtils, NonemptyString}
+import edu.umass.cs.iesl.scalacommons.{SeqUtils, StringUtils, OptionUtils, NonemptyString}
 import com.weiglewilczek.slf4s.Logging
 
 object PersonName {
@@ -33,8 +33,10 @@ object PersonName {
 	def combineGivenNames(set: Set[Seq[NonemptyString]]): Seq[NonemptyString] = {
 		// ** align all the sequences, allowing initials to align with full names, and output the consensus sequence
 		// throw new NotImplementedException
-		// ** just combine for now
-		set.flatten.toSeq
+		// ** just pick the longest for now
+
+    SeqUtils.argMax(set, (s:Seq[NonemptyString]) => s.map(_.length).sum).head
+
 	}
 }
 

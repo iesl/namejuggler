@@ -47,8 +47,16 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     assert(inferred.bestFullName === "Kermit T. Frog".opt)
   }
 
-  test("Initial-formatted simple names with periods are parsed as expected") {
+  test("Initial-formatted simple names with periods and spaces are parsed as expected") {
     val inferred = PersonNameWithDerivations("K. T. Frog").inferFully
+    assert(inferred.givenNames === Seq("K.".n, "T.".n))
+    assert(inferred.surNames === Set("Frog".n))
+    assert(inferred.allInitials === "K. T. F.".opt)
+    assert(inferred.bestFullName === "K. T. Frog".opt)
+  }
+
+  test("Initial-formatted simple names with periods and no spaces are parsed as expected") {
+    val inferred = PersonNameWithDerivations("K.T. Frog").inferFully
     assert(inferred.givenNames === Seq("K.".n, "T.".n))
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
