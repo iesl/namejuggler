@@ -35,7 +35,7 @@ object PersonNameFormat extends Logging {
 
   // ** add more
   private val validSurnameParticles =
-    Seq("van","von","de","du","la","del")
+    Seq("van","von","der","de","du","la","del")
 
   def isPrefix(s: String): Boolean = {
     s.trim.nonEmpty && (allValidPrefixes.contains(s.toLowerCase))

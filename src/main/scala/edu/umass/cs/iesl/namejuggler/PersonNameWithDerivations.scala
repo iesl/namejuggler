@@ -66,6 +66,7 @@ trait PersonNameWithDerivations extends PersonName {
 
   // typically first name + middle initial, etc.
   //def givenNames: Option[NonemptyString] = None
+  // can be mashed initials, e.g. JA, J.A.
   def firstName: Option[NonemptyString] = None
 
   def middleNames: Seq[NonemptyString] = Nil
