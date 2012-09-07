@@ -35,8 +35,11 @@ object PersonName {
 		// throw new NotImplementedException
 		// ** just pick the longest for now
 
-    SeqUtils.argMax(set, (s:Seq[NonemptyString]) => s.map(_.length).sum).head
 
+    val longest = SeqUtils.argMax(set, (s:Seq[NonemptyString]) => s.map(_.length).sum)
+
+    // if there is a tie, pick the one with more elements
+    SeqUtils.argMax(longest, (s:Seq[NonemptyString]) => s.size).head
 	}
 }
 
