@@ -5,6 +5,7 @@ import org.scalatest.{FunSuite, BeforeAndAfter}
 import edu.umass.cs.iesl.scalacommons.{NonemptyString, StringUtils}
 import StringUtils._
 
+
 /**
  * @author <a href="mailto:dev@davidsoergel.com">David Soergel</a>
  * @version $Id$
@@ -13,8 +14,8 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   import StringUtils._
 
 	private def assertCanonicalCompatible(a: String, b: String) {
-    val acan = PersonNameWithDerivations(a).toCanonical
-    val bcan = PersonNameWithDerivations(b).toCanonical
+    val acan = PersonNameWithDerivations(a.n).toCanonical
+    val bcan = PersonNameWithDerivations(b.n).toCanonical
     val result = acan compatibleWith bcan
     if (!result)
     {
@@ -29,8 +30,8 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }*/
 
   private def assertNotCanonicalCompatible(a: String, b: String) {
-    val acan = PersonNameWithDerivations(a).toCanonical
-    val bcan = PersonNameWithDerivations(b).toCanonical
+    val acan = PersonNameWithDerivations(a.n).toCanonical
+    val bcan = PersonNameWithDerivations(b.n).toCanonical
     val result = acan compatibleWith bcan
     if (result)
     {
@@ -40,7 +41,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
   test("Normally formatted simple names are parsed as expected") {
-    val inferred = PersonNameWithDerivations("Kermit T. Frog").inferFully
+    val inferred = PersonNameWithDerivations("Kermit T. Frog".n).inferFully
     assert(inferred.givenNames === Seq("Kermit".n, "T.".n))
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
@@ -48,7 +49,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
   test("Initial-formatted simple names with periods and spaces are parsed as expected") {
-    val inferred = PersonNameWithDerivations("K. T. Frog").inferFully
+    val inferred = PersonNameWithDerivations("K. T. Frog".n).inferFully
     assert(inferred.givenNames === Seq("K.".n, "T.".n))
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
@@ -56,7 +57,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
   test("Initial-formatted simple names with periods and no spaces are parsed as expected") {
-    val inferred = PersonNameWithDerivations("K.T. Frog").inferFully
+    val inferred = PersonNameWithDerivations("K.T. Frog".n).inferFully
     assert(inferred.givenNames === Seq("K.".n, "T.".n))
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
@@ -64,7 +65,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
   test("Initial-formatted simple names without periods are parsed as expected") {
-    val inferred = PersonNameWithDerivations("KT Frog").inferFully
+    val inferred = PersonNameWithDerivations("KT Frog".n).inferFully
     assert(inferred.givenNames === Seq("K.".n, "T.".n))
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
@@ -73,7 +74,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
 
   test("Normally formatted complex names are parsed as expected") {
-    val inferred = PersonNameWithDerivations("Dr. Kermit T. Frog III, MD, Ph.D.").inferFully
+    val inferred = PersonNameWithDerivations("Dr. Kermit T. Frog III, MD, Ph.D.".n).inferFully
     assert(inferred.givenNames === Seq("Kermit".n, "T.".n))
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
@@ -86,7 +87,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
 
   test("Solid-caps formatted complex names are parsed as expected") {
-    val inferred = PersonNameWithDerivations("DR. KERMIT T. FROG III, MD, PHD").inferFully
+    val inferred = PersonNameWithDerivations("DR. KERMIT T. FROG III, MD, PHD".n).inferFully
     assert(inferred.givenNames === Seq("Kermit".n, "T.".n))
     assert(inferred.surNames === Set("Frog".n))
     assert(inferred.allInitials === "K. T. F.".opt)
@@ -97,57 +98,57 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
 	test("Names invert without space") {
-		                                   assert(PersonNameWithDerivations("Smith,John").inferFully.bestFullName === "John Smith".opt)
+		                                   assert(PersonNameWithDerivations("Smith,John".n).inferFully.bestFullName === "John Smith".opt)
 	                                   }
 	test("Names invert with space") {
-		                                assert(PersonNameWithDerivations("Smith, John").inferFully.bestFullName === "John Smith".opt)
+		                                assert(PersonNameWithDerivations("Smith, John".n).inferFully.bestFullName === "John Smith".opt)
 	                                }
 
   test("Names invert with middle initial") {
-    assert(PersonNameWithDerivations("Smith, John Q.").inferFully.bestFullName === "John Q. Smith".opt)
+    assert(PersonNameWithDerivations("Smith, John Q.".n).inferFully.bestFullName === "John Q. Smith".opt)
   }
 	test("Names don't invert with zero commas") {
-		                                            assert(PersonNameWithDerivations("John Smith").inferFully.bestFullName ===
+		                                            assert(PersonNameWithDerivations("John Smith".n).inferFully.bestFullName ===
 		                                                   "John Smith".opt)
 	                                            }
 	test("Names don't invert with two commas, easy degree") {
-		                                           assert(PersonNameWithDerivations("Smith, John, Ph.D.").inferFully.bestFullName ===
+		                                           assert(PersonNameWithDerivations("Smith, John, Ph.D.".n).inferFully.bestFullName ===
 		                                                  "John Smith, Ph.D.".opt)
 	                                           }
 
 	test("Names don't invert with two commas, hard degree") {
-		                                           assert(PersonNameWithDerivations("Smith, John, PhD").inferFully.bestFullName ===
+		                                           assert(PersonNameWithDerivations("Smith, John, PhD".n).inferFully.bestFullName ===
 		                                                  "John Smith, Ph.D.".opt)
 	                                           }
 
   test("Names don't invert with two commas, hard degree, caps") {
-    assert(PersonNameWithDerivations("SMITH, JOHN, PhD").inferFully.bestFullName ===
+    assert(PersonNameWithDerivations("SMITH, JOHN, PhD".n).inferFully.bestFullName ===
       "John Smith, Ph.D.".opt)
   }
 
   test("Inverted single first initial without period not interpreted as degree") {
-    assert(PersonNameWithDerivations("Smith, J").inferFully.firstName ===
+    assert(PersonNameWithDerivations("Smith, J".n).inferFully.firstName ===
       "J.".opt)
   }
   test("Inverted single first initial with period not interpreted as degree") {
-    assert(PersonNameWithDerivations("Smith, J.").inferFully.firstName ===
+    assert(PersonNameWithDerivations("Smith, J.".n).inferFully.firstName ===
       "J.".opt)
   }
 
   test("Inverted dual first initial without period mashed not interpreted as degree") {
-    assert(PersonNameWithDerivations("Smith, JA").inferFully.firstName ===
+    assert(PersonNameWithDerivations("Smith, JA".n).inferFully.firstName ===
       "J.".opt)
   }
   test("Inverted dual first initial without period unmashed not interpreted as degree") {
-    assert(PersonNameWithDerivations("Smith, J A").inferFully.firstName ===
+    assert(PersonNameWithDerivations("Smith, J A".n).inferFully.firstName ===
       "J.".opt)
   }
   test("Inverted dual first initial with period mashed not interpreted as degree") {
-    assert(PersonNameWithDerivations("Smith, J.A.").inferFully.firstName ===
+    assert(PersonNameWithDerivations("Smith, J.A.".n).inferFully.firstName ===
       "J.".opt)
   }
   test("Inverted dual first initial with period unmashed not interpreted as degree") {
-    assert(PersonNameWithDerivations("Smith, J. A.").inferFully.firstName ===
+    assert(PersonNameWithDerivations("Smith, J. A.".n).inferFully.firstName ===
       "J.".opt)
   }
 
@@ -210,7 +211,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
 	test("Wrong joined middle initial is incompatible with full name") {assertNotCanonicalCompatible("Edward O. Wilson", "EQ Wilson")}
 
-  test("Lower-case middle names are interpreted as particles") {assert(PersonNameWithDerivations("Jacqueline du Pre").toCanonical.surNames.contains(NonemptyString("du Pre")))}
+  test("Lower-case middle names are interpreted as particles") {assert(PersonNameWithDerivations("Jacqueline du Pre".n).toCanonical.surNames.contains(NonemptyString("du Pre")))}
 
   test("Names with particles are compatible with names missing particles") {assertCanonicalCompatible("Jacqueline du Pre", "Jacqueline Pre")}
 
