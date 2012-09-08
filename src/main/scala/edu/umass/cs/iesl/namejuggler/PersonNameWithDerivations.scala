@@ -5,9 +5,9 @@ import StringUtils._
 import edu.umass.cs.iesl.scalacommons.NonemptyString
 
 object PersonNameWithDerivations {
-  def apply(s: String): PersonNameWithDerivations = {
+  def apply(s: NonemptyString): PersonNameWithDerivations = {
     new PersonNameWithDerivations {
-      override val fullNames = Set(NonemptyString(s))
+      override val fullNames = Set(s)
     }
   }
 
