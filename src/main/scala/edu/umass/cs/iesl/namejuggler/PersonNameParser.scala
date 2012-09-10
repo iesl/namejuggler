@@ -36,10 +36,20 @@ object PersonNameParser extends Logging {
     }
   }
 
+  /**
+   * @param s
+   * @param containsLowerCase
+   * @return triple of (heredity suffixes, degree suffixes, core name string)
+   */
   def stripSuffixes(s: String, containsLowerCase: Boolean): (Option[NonemptyString], Set[NonemptyString], String) = {
     try {
       val splitLast(remainder, separator, lastToken) = s.trim
-      if (isHereditySuffix(lastToken)) {
+      if(lastToken.isEmpty)
+      {
+        // anomalous name ending in comma; just drop it
+        stripSuffixes(remainder, containsLowerCase)
+      }
+      else if (isHereditySuffix(lastToken)) {
         logger.debug("Found heredity suffix in '" + s + "': '" + lastToken + "'")
         val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
         val f: Option[NonemptyString] = lastToken

@@ -50,6 +50,8 @@ object PersonNameFormat extends Logging {
     s.trim.nonEmpty && (validSurnameParticles.contains(s))
   }
 
+  val consecutiveUpperCasePattern = "[A-Z][A-Z]".r
+
   /**
    * We can't be sure "MD" is a degree, because it could be the initials for Mark Dobson.
    * Conversely we can't be sure that a real degree conforms to any standard of punctuation or capitalization.
@@ -66,7 +68,10 @@ object PersonNameFormat extends Logging {
     }
     else {
       val stringMatch = allValidDegrees.contains(s)
-      val caseSuggestive = s.isAllUpperCase && containsLowerCase
+
+      val consecutiveUpperCasePattern(c) = s
+
+      val caseSuggestive = c.nonEmpty && containsLowerCase
 
       stringMatch || caseSuggestive
     }
