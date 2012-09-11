@@ -35,7 +35,7 @@ object PersonNameFormat extends Logging {
 
   // ** add more
   private val validSurnameParticles =
-    Seq("van","von","der","de","du","la","del")
+    Seq("van", "von", "der", "de", "du", "la", "del")
 
   def isPrefix(s: String): Boolean = {
     s.trim.nonEmpty && (allValidPrefixes.contains(s.toLowerCase))
@@ -50,7 +50,7 @@ object PersonNameFormat extends Logging {
     s.trim.nonEmpty && (validSurnameParticles.contains(s))
   }
 
-  val consecutiveUpperCasePattern = "[A-Z][A-Z]".r
+  val consecutiveUpperCasePattern = "([A-Z][A-Z])".r
 
   /**
    * We can't be sure "MD" is a degree, because it could be the initials for Mark Dobson.
@@ -69,9 +69,10 @@ object PersonNameFormat extends Logging {
     else {
       val stringMatch = allValidDegrees.contains(s)
 
-      val consecutiveUpperCasePattern(c) = s
-
-      val caseSuggestive = c.nonEmpty && containsLowerCase
+      val caseSuggestive = s match {
+        case consecutiveUpperCasePattern(c) => c.nonEmpty && containsLowerCase
+        case _ => false
+      }
 
       stringMatch || caseSuggestive
     }
