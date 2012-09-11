@@ -27,7 +27,7 @@ object PersonNameParser extends Logging {
       if (isPrefix(firstToken)) {
         val (p, r) = stripPrefixes(remainder)
         val f: Option[NonemptyString] = firstToken
-        (p + f.get, r)
+        f.map(ne=>(p + ne, r)).getOrElse((p,r))
       }
       else (Set.empty, s)
     }
@@ -71,7 +71,7 @@ object PersonNameParser extends Logging {
           logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
           val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
           val f: Option[NonemptyString] = fixDegree(lastToken)
-          (h, d + f.get, r)
+          f.map(ne=>(h, d + ne, r)).getOrElse((h,d,r))
 
         }
         def rejectDegree: (Option[NonemptyString], Set[NonemptyString], String) = (None, Set.empty, s)
