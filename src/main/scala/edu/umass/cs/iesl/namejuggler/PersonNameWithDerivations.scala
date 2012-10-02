@@ -3,6 +3,7 @@ package edu.umass.cs.iesl.namejuggler
 import edu.umass.cs.iesl.scalacommons.{SeqUtils, StringUtils, OptionUtils}
 import StringUtils._
 import edu.umass.cs.iesl.scalacommons.NonemptyString
+import org.apache.commons.lang.StringEscapeUtils
 
 object PersonNameWithDerivations {
   def apply(s: NonemptyString): PersonNameWithDerivations = {

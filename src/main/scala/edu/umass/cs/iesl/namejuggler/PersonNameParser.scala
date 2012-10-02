@@ -27,7 +27,7 @@ object PersonNameParser extends Logging {
       if (isPrefix(firstToken)) {
         val (p, r) = stripPrefixes(remainder)
         val f: Option[NonemptyString] = firstToken
-        f.map(ne=>(p + ne, r)).getOrElse((p,r))
+        f.map(ne => (p + ne, r)).getOrElse((p, r))
       }
       else (Set.empty, s)
     }
@@ -44,8 +44,7 @@ object PersonNameParser extends Logging {
   def stripSuffixes(s: String, containsLowerCase: Boolean): (Option[NonemptyString], Set[NonemptyString], String) = {
     try {
       val splitLast(remainder, separator, lastToken) = s.trim
-      if(lastToken.isEmpty)
-      {
+      if (lastToken.isEmpty) {
         // anomalous name ending in comma; just drop it
         stripSuffixes(remainder, containsLowerCase)
       }
@@ -54,10 +53,12 @@ object PersonNameParser extends Logging {
         val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
         val f: Option[NonemptyString] = lastToken
         if (h.nonEmpty) {
-          throw new PersonNameParsingException("More than one heredity suffix: " + s)
+          //throw new PersonNameParsingException("More than one heredity suffix: " + s)
+          logger.warn("More than one heredity suffix: " + s)
         }
 
-        (f, d, r)
+        // combine heredity suffixes into a single string
+        (Seq(h, f).flatten.mkString(" "), d, r)
       }
 
       // it can be hard to distinguish degrees from middle initials.
@@ -71,7 +72,7 @@ object PersonNameParser extends Logging {
           logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
           val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
           val f: Option[NonemptyString] = fixDegree(lastToken)
-          f.map(ne=>(h, d + ne, r)).getOrElse((h,d,r))
+          f.map(ne => (h, d + ne, r)).getOrElse((h, d, r))
 
         }
         def rejectDegree: (Option[NonemptyString], Set[NonemptyString], String) = (None, Set.empty, s)
@@ -110,9 +111,11 @@ object PersonNameParser extends Logging {
     }
   }
 
-  def fixCaps(s: String)=if(s.isMixedCase) s else s.toLowerCase.capitalize
+  def fixCaps(s: String) : String = if (s.isMixedCase) s else s.toLowerCase.capitalize
 
-  def fixCapsExceptParticles(s: String)=if(isSurnameParticle(s)) s.toLowerCase else if(s.isMixedCase) s else s.toLowerCase.capitalize
+  def fixCapsExceptParticles(ss: String) : String = ss.split(" ").map(s => {
+    if (isSurnameParticle(s)) s.toLowerCase else if (s.isMixedCase) s else s.toLowerCase.capitalize
+  }).mkString(" ")
 
   // Kermit Kalman the Frog, Ph.D., F.R.S.
   // the Frog, Kermit Kalman, Ph.D., F.R.S.
@@ -145,9 +148,8 @@ object PersonNameParser extends Logging {
         new PersonNameWithDerivations {
           override val givenNames: Seq[NonemptyString] = massageGivenNames(coreToks(1).toSeq)
 
-
           // declare a single complete surname for now.  If there are several names, they should get expanded later.
-          override val surNames: Set[NonemptyString] = fixCaps(coreToks(0).mkString(" ")).opt.toSet
+          override val surNames: Set[NonemptyString] = fixCapsExceptParticles(coreToks(0).mkString(" ")).opt.toSet
         }
       }
       else {
@@ -197,7 +199,14 @@ object PersonNameParser extends Logging {
     // detect nicknames in quotes, etc.
     // ** completely simplistic for now
 
-    val (givenR, sur) = splitOnCondition((s: String) => s.isAllLowerCase)(Nil, nameTokens.toList)
+
+    // if a particle appears capitalized but not in the first position, lowercase it.
+    // so "la Silva" will be interpereted as a surname only; Charlie La Silva turns into Charlie La Silva, but
+    // "Van Morrison" is left alone
+
+    val nameTokensParticlesFixed : List[String] = List(nameTokens.head) ++ (nameTokens.tail map fixParticle)
+
+    val (givenR, sur) = splitOnCondition((s: String) => (s.isAllLowerCase))(Nil, nameTokensParticlesFixed)
 
     new PersonName {
       override val surNames: Set[NonemptyString] = sur.map(fixCapsExceptParticles(_)).mkString(" ").opt.toSet
@@ -310,8 +319,8 @@ object PersonNameParser extends Logging {
 
 
      */
-  /******************************************/
-  /****** CRUFT BELOW ***********************/
+  /** ****************************************/
+  /** **** CRUFT BELOW ***********************/
   /*
        val invertedNamePattern = """^([^,]*),([^,]*)$""".r
 

@@ -35,7 +35,7 @@ object PersonNameFormat extends Logging {
 
   // ** add more
   private val validSurnameParticles =
-    Seq("van", "von", "der", "de", "du", "la", "del")
+    Seq("van", "von", "der", "de", "du", "da", "la", "del", "ter", "bin", "della")
 
   def isPrefix(s: String): Boolean = {
     s.trim.nonEmpty && (allValidPrefixes.contains(s.toLowerCase))
@@ -48,6 +48,13 @@ object PersonNameFormat extends Logging {
 
   def isSurnameParticle(s: String): Boolean = {
     s.trim.nonEmpty && (validSurnameParticles.contains(s))
+  }
+
+  def isSurnameParticleNoCase(s:String):Boolean = isSurnameParticle(s.toLowerCase)
+
+  def fixParticle(s:String) : String = {
+    val lc = s.toLowerCase
+    if (isSurnameParticle(lc)) lc else s
   }
 
   val consecutiveUpperCasePattern = "([A-Z][A-Z])".r

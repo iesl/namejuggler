@@ -75,7 +75,7 @@ trait PersonName {
 
 	final def nickNamesInQuotes: Option[NonemptyString] = nickNames.map(s => NonemptyString("'" + s.toString + "'")).mkString(" ")
 
-	final def allGivenAndNick: Seq[NonemptyString] = (givenNames ++ nickNames).toSeq
+	final def allGivenAndNick: Seq[NonemptyString] = (givenNames ++ nickNamesInQuotes).toSeq
 
 	/**
 	 * Each element of this list should be a complete and valid surname (i.e., using only one should produce a valid full name)
@@ -102,12 +102,16 @@ trait PersonName {
 	// ** Careful: don't duplicate degrees when merging, but also don't assume they're unique (Kermit the Frog, Ph.D., Ph.D.)
 	// ** no problem: assume unique for now, and assume order doesn't matter
 	def degrees: Set[NonemptyString] = Set.empty
+
+  def fieldsInCanonicalOrder:Seq[Iterable[NonemptyString]] = Seq(prefixes,givenNames,nickNamesInQuotes,surNames,hereditySuffix,degrees,preferredFullName)
+
 }
 
 /**
  * allow declaring a record canonical, to ensure that there are no explicit derivations
  */
 trait CanonicalPersonName extends PersonName with Logging {
+
   lazy val withDerivations = new CanonicalPersonNameWithDerivations(this)
 
 	override def toString = withDerivations.toString

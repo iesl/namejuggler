@@ -13,7 +13,7 @@ object NameJugglerBuild extends Build
 
 	import allDeps._
 
-	val deps = Seq(ieslScalaCommons("latest.integration"), scalatest())
+	val deps = Seq(ieslScalaCommons("latest.integration"), scalatest(),commonsLang())
 
 	lazy val namejuggler = IeslProject("namejuggler", vers, deps, Public, WithSnapshotDependencies)
 	                      .settings(assemblySettings: _*).cleanLogging.standardLogging
