@@ -3,38 +3,38 @@ Parsing and compatibility testing of person names.
 Name Parsing
 ============
 
-NameJuggler attempts to parse individual names into constituent components.
+NameJuggler attempts to parse individual names into constituent components based on simple heuristics.
 
 We represent names as a set of canonical atomic fields, including degrees, nicknames, suffixes, etc.  Being really comprehensive and accurate about this is not possible due to too many
 cultural variations and ambiguities.  Still, this should cover most of the cases we care about re authorship of journal articles.
 
 Examples of names that can be parsed:
 
-input | degree | given | sur | heredity | degree
-------|--------|-------|-----|----------|-------
-Kermit T. Frog | | Kermit T. | Frog | |
-    K. T. Frog
-    K.T. Frog
-    KT Frog
-    Dr. Kermit T. Frog III, MD, Ph.D.
-    DR. KERMIT T. FROG III, MD, PHD
-    Smith,John
-    Smith, John
-    Smith, John Q.
-    John Smith
-    Smith, John, Ph.D.
-    Smith, John, PhD
-    SMITH, JOHN, PhD
-    Smith, J
-    Smith, J.
-    Smith, JA
-    Smith, J A
-    Smith, J.A.
-    Smith, J. A.
-    Frenkel ter Hofstede
-    Frenkel Ter Hofstede
-    Frenkel de La Silva
-    Frenkel la Silva del Ruiz
+input | prefixes | givenNames | nickNamesInQuotes | surNames | hereditySuffix | degrees | preferredFullName
+-|-|-|-|-|-|-|-
+Kermit T. Frog |  | Kermit T. |  | Frog |  |  |
+K. T. Frog |  | K. T. |  | Frog |  |  |
+K.T. Frog |  | K. T. |  | Frog |  |  |
+KT Frog |  | K. T. |  | Frog |  |  |
+Dr. Kermit T. Frog III, MD, Ph.D. | Dr. | Kermit T. |  | Frog | III | M.D. Ph.D. |
+DR. KERMIT T. FROG III, MD, PHD | Dr. | Kermit T. |  | Frog | III | M.D. Ph.D. |
+Smith,John |  | John |  | Smith |  |  |
+Smith, John |  | John |  | Smith |  |  |
+Smith, John Q. |  | John Q. |  | Smith |  |  |
+John Smith |  | John |  | Smith |  |  |
+Smith, John, Ph.D. |  | John |  | Smith |  | Ph.D. |
+Smith, John, PhD |  | John |  | Smith |  | Ph.D. |
+SMITH, JOHN, PhD |  | John |  | Smith |  | Ph.D. |
+Smith, J |  | J. |  | Smith |  |  |
+Smith, J. |  | J. |  | Smith |  |  |
+Smith, JA |  | J. A. |  | Smith |  |  |
+Smith, J A |  | J. A. |  | Smith |  |  |
+Smith, J.A. |  | J. A. |  | Smith |  |  |
+Smith, J. A. |  | J. A. |  | Smith |  |  |
+Frenkel ter Hofstede |  | Frenkel |  | ter Hofstede |  |  |
+Frenkel Ter Hofstede |  | Frenkel |  | ter Hofstede |  |  |
+Frenkel de La Silva |  | Frenkel |  | de la Silva |  |  |
+Frenkel la Silva del Ruiz |  | Frenkel |  | la Silva del Ruiz |  |
 
 Examples of names that are __not__ yet correctly parsed:
 
@@ -49,6 +49,8 @@ s easier to tell whether two names probably do not represent the same person.  S
 
 Some example name pairs that NameJuggler identifies as __incompatible__ include:
 
+       name A    |   name B
+-----------------|--------------
       John Smith | John Jones
       John Smith | Jane Smith
     John A Smith | John B Smith
@@ -57,7 +59,8 @@ Edward O. Wilson | EQ Wilson
 
 Some example name pairs that NameJuggler identifies as __compatible__ include:
 
-
+        name A    |   name B
+------------------|--------------
        John Smith | John Smith
        John Smith | Smith
     John Q. Smith | John Q. Smith
