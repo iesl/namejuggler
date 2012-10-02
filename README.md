@@ -10,7 +10,9 @@ cultural variations and ambiguities.  Still, this should cover most of the cases
 
 Examples of names that can be parsed:
 
-    Kermit T. Frog
+input | degree | given | sur | heredity | degree
+------|--------|-------|-----|----------|-------
+Kermit T. Frog | | Kermit T. | Frog | |
     K. T. Frog
     K.T. Frog
     KT Frog
@@ -103,10 +105,12 @@ Things that can be done in code
 
 NameJuggler is mainly meant to be used as a library.  The simplest way to parse a name is:
 
+    :::scala
     val name : PersonNameWithDerivations = PersonNameWithDerivations("John Q. Public").inferFully
 
 Canonical fields can then be reassembled to produce alternate representations of the name (e.g., representing given names only by initials, etc.)
 
+    :::scala
     assert(name.initials === "J. Q. P.")
 
 and so forth.
