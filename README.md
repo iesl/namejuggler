@@ -42,7 +42,7 @@ Frenkel la Silva del Ruiz |  | Frenkel |  | la Silva del Ruiz |  |
 Examples of names that are __not__ yet correctly parsed:
 
 | input |
---------------------------------------
+|------------------------------------|
 | Frog III, MD, Ph.D., Dr. Kermit T. |
 | Frog III, Dr. Kermit T., MD, Ph.D. |
 
@@ -50,8 +50,7 @@ Examples of names that are __not__ yet correctly parsed:
 Name Compatibility
 ------------------
 
-NameJuggler also compares names for compatibility, i.e. to determine whether two strings could possibly be alternative representations of the same name.  Of course there is no guarantee that two similar names actually represent the same person; but it
-s easier to tell whether two names probably do not represent the same person.  So the compatibility tester should be thought of as filter that identifies clearly different names, but makes no claims about the positive cases.  In the simplest case, "A.B." and "AB" are compatible, but many people have those initials.
+NameJuggler also compares names for compatibility, i.e. to determine whether two strings could possibly be alternative representations of the same name.  Of course there is no guarantee that two similar names actually represent the same person; but it is often easy to tell that two names probably do _not_ represent the same person.  Thus, the compatibility tester should be thought of as filter that distinguishes clearly different names, but that makes no claims about the positive cases.  In the simplest case, "A.B." and "AB" are compatible, but many people have those initials.
 
 Some example name pairs that NameJuggler identifies as __incompatible__ include:
 
