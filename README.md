@@ -46,6 +46,8 @@ Examples of names that are __not__ yet correctly parsed:
 | Frog III, MD, Ph.D., Dr. Kermit T. |
 | Frog III, Dr. Kermit T., MD, Ph.D. |
 
+Please let me know if you find additional examples of names that are not handled correctly.
+
 
 Name Compatibility
 ------------------
