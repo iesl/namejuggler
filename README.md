@@ -41,8 +41,11 @@ Frenkel la Silva del Ruiz |  | Frenkel |  | la Silva del Ruiz |  |
 
 Examples of names that are __not__ yet correctly parsed:
 
+| input |
+--------------------------------------
 | Frog III, MD, Ph.D., Dr. Kermit T. |
 | Frog III, Dr. Kermit T., MD, Ph.D. |
+
 
 Name Compatibility
 ------------------
@@ -97,20 +100,25 @@ Some example name pairs that NameJuggler identifies as __compatible__ include:
 Quick Start
 -----------
 
-To parse names, just pass them to STDIN, one per line:
+To parse names, just pass them to STDIN, one per line; the output is a tab-delimited table like the example above.
 
     :::sh
     echo "John Q. Public" | java -jar namejuggler-assembly-0.1-SNAPSHOT.jar
 
-To compare names, pass them on a line, delimited by tabs or semicolons.  All vs. all comparisons are made, so take care
-how many you include.  For now, the output is the complete adjacency table: the first name on each line is the focal node, and
-remaining names are its neighbors.  Links are provided in both directions.  (Alternate output formats--e.g., just the list of edges--
-are easy to arrange; please let me know what you need).  Reasonable coreferent entities might be
-discovered by looking for maximal cliques in the graph given by this adjacency table; however this is not yet
-provided internally.
+To compare names, pass them on a line, delimited by tabs or semicolons, and use the `--compat` flag.  All vs. all comparisons are made among the names on a line, so take care
+how many you include.  Multiple lines are processed independently.
 
     :::sh
     echo "John Q. Public ; J.Q. Public ; J. Quentin Public ; R. Q. Public" | java -jar namejuggler-assembly-0.1-SNAPSHOT.jar --compat
+
+For now, the output is the complete adjacency table: the first name on each line is the focal node, and
+remaining names are its neighbors.  Links are provided in both directions.  (Alternate output formats--e.g., just the list of edges--
+are easy to arrange; please let me know what you need).
+
+Reasonable coreferent entities might be
+discovered by looking for maximal cliques in the graph given by this adjacency table; however this is not yet
+provided internally.
+
 
 
 Background
