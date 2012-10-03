@@ -200,6 +200,8 @@ object PersonNameParser extends Logging {
     // ** completely simplistic for now
 
 
+    // ** detect initials
+
     // if a particle appears capitalized but not in the first position, lowercase it.
     // so "la Silva" will be interpereted as a surname only; Charlie La Silva turns into Charlie La Silva, but
     // "Van Morrison" is left alone

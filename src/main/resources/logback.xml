@@ -21,7 +21,7 @@
     </root>
 
 
-    <logger name="edu.umass.cs.iesl" level="DEBUG"/>
+    <logger name="edu.umass.cs.iesl" level="INFO"/>
     <logger name="edu.umass.cs.iesl.namejuggler" level="INFO"/>
 
     <!-- Fix potential performance problem involving log calls bridged from java.util.logging -->
