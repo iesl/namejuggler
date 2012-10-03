@@ -20,14 +20,14 @@ object NameJuggler extends Logging {
         val names = l.split("[\t;|]").map(_.trim).filterNot(_.isEmpty)
         logger.info("Testing compability among " + names.size + " names.")
         val z = for (b <- names) yield (b, PersonNameWithDerivations(b.n).toCanonical)
-        val result = NameCliquer.allVsAllCompatibility(z)
-        for (x <- result.keys) println(x + "\t" + result(x).mkString("\t"))
-        /*
+        //val result = NameCliquer.allVsAllCompatibility(z)
+        //for (x <- result.keys) println(x + "\t" + result(x).mkString("\t"))
+
         logger.debug("Testing compability among " + names.size + " parsed names.")
         val (cliques, transitive) = NameCliquer.findCompatibilityGroups(z)
         for (c <- cliques) println("CLIQUE\t" + c.mkString("\t"))
         for (c <- transitive) println("TRANS\t" + c.mkString("\t"))
-        */
+
       }
     }
     else {
@@ -72,10 +72,10 @@ object NameCliquer extends Logging {
 
   private def getOnePartition[A](adjacency: Map[A, Set[A]]): (Set[A], Map[A, Set[A]]) = {
 
-    val (focal, neighbors) = adjacency.head
+    val (node, neighbors) = adjacency.head
 
     val done: mutable.Set[A] = mutable.Set.empty
-    val members: mutable.Set[A] = mutable.Set.empty
+    val members: mutable.Set[A] = mutable.Set.empty + node
 
     def collectPartition(focal: A) {
       val neighbors = adjacency(focal)
@@ -86,7 +86,7 @@ object NameCliquer extends Logging {
       for (n <- (neighbors -- done)) collectPartition(n)
     }
 
-    collectPartition(focal)
+    collectPartition(node)
     logger.debug("Found partition with " + members.size + " members")
     (members.toSet, adjacency -- members)
   }
@@ -118,6 +118,8 @@ object NameCliquer extends Logging {
 
         val (aOrig, aParsed) = namesWithParsed.head
         val rest = namesWithParsed.tail
+
+        // would be nice to parallelize here, but that makes a mess updating the mutable sets.  Needs refactor...
         for ((bOrig, bParsed) <- rest if (aParsed compatibleWith bParsed)) {
           logger.debug("Found compatible pair: " + aOrig + "  |  " + bOrig)
           accum.getOrElseUpdate(aOrig,mutable.Set[String]()) += (bOrig)

@@ -100,6 +100,8 @@ Some example name pairs that NameJuggler identifies as __compatible__ include:
 Quick Start
 -----------
 
+To just run the command-line version, please download the [latest build](https://dev-iesl.cs.umass.edu/jenkins/job/namejuggler/lastSuccessfulBuild/artifact/target/namejuggler-assembly-0.1-SNAPSHOT.jar).
+
 To parse names, just pass them to STDIN, one per line; the output is a tab-delimited table like the example above.
 
     :::sh
@@ -111,13 +113,9 @@ how many you include.  Multiple lines are processed independently.
     :::sh
     echo "John Q. Public ; J.Q. Public ; J. Quentin Public ; R. Q. Public" | java -jar namejuggler-assembly-0.1-SNAPSHOT.jar --compat
 
-For now, the output is the complete adjacency table: the first name on each line is the focal node, and
-remaining names are its neighbors.  Links are provided in both directions.  (Alternate output formats--e.g., just the list of edges--
-are easy to arrange; please let me know what you need).
-
-Reasonable coreferent entities might be
-discovered by looking for maximal cliques in the graph given by this adjacency table; however this is not yet
-provided internally.
+The output groups unambiguous cliques of mutually compatible names on lines starting with CLIQUE.  These cliques have no external links and so are unambiguous.
+Lines starting with TRANS show groups of names that are transitively but perhaps not directly compatible.  The
+adjacency graph among these ambiguous cases may of course be interesting; one approach might be to find maximal cliques within it.  Please let me know what output format would be helpful if you plan to pursue further analyses of this sort.
 
 
 
