@@ -13,14 +13,14 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
   import StringUtils._
 
-  private def assertCanonicalCompatible(a: String, b: String) {
+  private def canonicalCompatible(a: String, b: String) : Boolean = {
     val acan = PersonNameWithDerivations(a.n).toCanonical
     val bcan = PersonNameWithDerivations(b.n).toCanonical
     val result = acan compatibleWith bcan
     if (!result) {
       logger.error(acan + " not compatible with " + bcan)
     }
-    assert(result)
+    result
   }
 
   /*
@@ -28,14 +28,14 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     assert(PersonNameWithDerivations(a).inferFully compatibleWith PersonNameWithDerivations(b).inferFully)
   }*/
 
-  private def assertNotCanonicalCompatible(a: String, b: String) {
+  private def notCanonicalCompatible(a: String, b: String) : Boolean = {
     val acan = PersonNameWithDerivations(a.n).toCanonical
     val bcan = PersonNameWithDerivations(b.n).toCanonical
     val result = acan compatibleWith bcan
     if (result) {
       logger.error(acan + " erroneously compatible with " + bcan)
     }
-    assert(!result)
+    !result
   }
 
   test("Normally formatted simple names are parsed as expected") {
@@ -175,6 +175,35 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     assert(PersonNameWithDerivations("Smith, J. A.".n).inferFully.firstName ===
       "J.".opt)
   }
+
+  test("Initials with periods unmashed interpreted as initials") {
+    val n = PersonNameWithDerivations("J. A. S.".n).inferFully
+    assert(n.firstName === "J.".opt)
+    assert(n.givenInitials === "J. A.".opt)
+    assert(n.surNames.contains("S.".n))
+  }
+
+  test("Initials with periods mashed interpreted as initials") {
+    val n = PersonNameWithDerivations("J.A.S.".n).inferFully
+    assert(n.firstName === "J.".opt)
+    assert(n.givenInitials === "J. A.".opt)
+    assert(n.surNames.contains("S.".n))
+  }
+
+  test("Initials without periods mashed interpreted as initials") {
+    val n = PersonNameWithDerivations("JAS".n).inferFully
+    assert(n.firstName === "J.".opt)
+    assert(n.givenInitials === "J. A.".opt)
+    assert(n.surNames.contains("S.".n))
+  }
+
+  test("Initials without periods unmashed interpreted as initials") {
+    val n = PersonNameWithDerivations("J A S".n).inferFully
+    assert(n.firstName === "J.".opt)
+    assert(n.givenInitials === "J. A.".opt)
+    assert(n.surNames.contains("S.".n))
+  }
+
   test("Particle preceding surname is detected if lowercase") {
     val sur = PersonNameWithDerivations("Frenkel ter Hofstede".n).inferFully.surNames
     assert(sur.contains("ter Hofstede".n))
@@ -205,122 +234,161 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
   test("Names may match fully") {
-    assertCanonicalCompatible("John Smith", "John Smith")
+    assert(canonicalCompatible("John Smith", "John Smith"))
   }
   test("Last name alone matches") {
-    assertCanonicalCompatible("John Smith", "Smith")
+    assert(canonicalCompatible("John Smith", "Smith"))
   }
   test("First name alone does not match") {
-    assertNotCanonicalCompatible("John Smith", "John")
+    assert(notCanonicalCompatible("John Smith", "John"))
   }
 
   test("Names may match fully with initial") {
-    assertCanonicalCompatible("John Q. Smith", "John Q. Smith")
+    assert(canonicalCompatible("John Q. Smith", "John Q. Smith"))
   }
 
   test("Inverted names match") {
-    assertCanonicalCompatible("Smith, John", "John Smith")
+    assert(canonicalCompatible("Smith, John", "John Smith"))
   }
 
   test("Inverted names match with initial") {
-    assertCanonicalCompatible("Smith, John Q.", "John Q. Smith")
+    assert(canonicalCompatible("Smith, John Q.", "John Q. Smith"))
   }
 
+  test("Names may match against two initials joined") {
+    assert(canonicalCompatible("John Smith", "JS"))
+  }
+  test("Names may match against two initials with periods") {
+    assert(canonicalCompatible("John Smith", "J.S."))
+  }
+  test("Names may match against two initials with spaces") {
+    assert(canonicalCompatible("John Smith", "J S"))
+  }
+  test("Names may match against two initials with periods and spaces") {
+    assert(canonicalCompatible("John Smith", "J. S."))
+  }
+
+  test("Names may match against three initials joined") {
+    assert(canonicalCompatible("John Smith", "JQS"))
+  }
+
+  test("Initials match with and without periods") {
+    assert(canonicalCompatible("JS", "J.S."))
+  }
+
+  test("Initials match with and without spaces") {
+    assert(canonicalCompatible("JS", "J S"))
+  }
+
+  test("Middle initials must match") {
+    assert(canonicalCompatible("JQS", "JPS"))
+  }
 
   test("Last names must match") {
-    assertNotCanonicalCompatible("John Smith", "John Jones")
+    assert(notCanonicalCompatible("John Smith", "John Jones"))
   }
 
   test("Suffixes supported without comma") {
-    assertCanonicalCompatible("John Smith", "John Smith MD")
+    assert(canonicalCompatible("John Smith", "John Smith MD"))
   }
 
   test("Suffixes supported with comma") {
-    assertCanonicalCompatible("John Smith", "John Smith, MD")
+    assert(canonicalCompatible("John Smith", "John Smith, MD"))
   }
 
   test("Multiple suffixes supported with multiple commas") {
-    assertCanonicalCompatible("John Smith", "John Smith, MD, PhD")
+    assert(canonicalCompatible("John Smith", "John Smith, MD, PhD"))
   }
 
   test("Multiple suffixes supported with multiple commas, inverted") {
-    assertCanonicalCompatible("John Smith", "Smith, John, MD, PhD")
+    assert(canonicalCompatible("John Smith", "Smith, John, MD, PhD"))
   }
 
   test("Multiple suffixes supported with single commas") {
-    assertCanonicalCompatible("John Smith", "John Smith, MD PhD")
+    assert(canonicalCompatible("John Smith", "John Smith, MD PhD"))
   }
 
   test("Multiple suffixes supported with no commas") {
-    assertCanonicalCompatible("John Smith", "John Smith MD PhD")
+    assert(canonicalCompatible("John Smith", "John Smith MD PhD"))
   }
 
   test("First names must match") {
-    assertNotCanonicalCompatible("John Smith", "Jane Smith")
+    assert(notCanonicalCompatible("John Smith", "Jane Smith"))
   }
 
   test("First names may match as initial") {
-    assertCanonicalCompatible("John Smith", "J Smith")
+    assert(canonicalCompatible("John Smith", "J Smith"))
   }
 
   test("First names may match as initial, inverted") {
-    assertCanonicalCompatible("Smith, John", "J Smith")
+    assert(canonicalCompatible("Smith, John", "J Smith"))
   }
 
   test("Adding middle name OK") {
-    assertCanonicalCompatible("John Smith", "John Archibald Smith")
+    assert(canonicalCompatible("John Smith", "John Archibald Smith"))
   }
 
   test("Adding middle initial OK") {
-    assertCanonicalCompatible("John Smith", "John A Smith")
+    assert(canonicalCompatible("John Smith", "John A Smith"))
   }
 
   test("Adding middle name OK with first initial") {
-    assertCanonicalCompatible("John Smith", "J Archibald Smith")
+    assert(canonicalCompatible("John Smith", "J Archibald Smith"))
   }
 
   test("Adding middle initial OK with first initial") {
-    assertCanonicalCompatible("John Smith", "J A Smith")
+    assert(canonicalCompatible("John Smith", "J A Smith"))
   }
 
   test("Wrong middle initials are incompatible") {
-    assertNotCanonicalCompatible("John A Smith", "John B Smith")
+    assert(notCanonicalCompatible("John A Smith", "John B Smith"))
+  }
+
+  test("Wrong first initials are incompatible given matching middle") {
+    assert(notCanonicalCompatible("A John Smith", "B John Smith"))
+  }
+
+  test("Wrong first names are incompatible given matching middle") {
+    assert(notCanonicalCompatible("Alberforth John Smith", "Bartholemew John Smith"))
   }
 
   test("Adding joined middle initial OK with first initial") {
-    assertCanonicalCompatible("John Smith", "JA Smith")
+    assert(canonicalCompatible("John Smith", "JA Smith"))
   }
 
   test("Initial vs joined middle initial are compatible") {
-    assertCanonicalCompatible("J Smith", "JA Smith")
+    assert(canonicalCompatible("J Smith", "JA Smith"))
   }
 
   test("Wrong joined middle initials are incompatible") {
-    assertNotCanonicalCompatible("JA Smith", "JB Smith")
+    assert(notCanonicalCompatible("JA Smith", "JB Smith"))
+  }
+  test("Wrong joined first initials are incompatible") {
+    assert(notCanonicalCompatible("AJ Smith", "BJ Smith"))
   }
 
   test("Short first name interpreted as name, not initials, when not solid caps") {
-    assertCanonicalCompatible("E O Wilson", "Ed Wilson")
+    assert(canonicalCompatible("E O Wilson", "Ed Wilson"))
   }
 
   test("Solid caps short first name interpreted as initials") {
-    assertCanonicalCompatible("E O Wilson", "EO Wilson")
+    assert(canonicalCompatible("E O Wilson", "EO Wilson"))
   }
 
   test("Solid caps short first name not interpreted as initials when there are other initals") {
-    assertCanonicalCompatible("E O Wilson", "ED O Wilson")
+    assert(canonicalCompatible("E O Wilson", "ED O Wilson"))
   }
 
   test("Solid caps long first name interpreted as name") {
-    assertCanonicalCompatible("E O Wilson", "EDWARD Wilson")
+    assert(canonicalCompatible("E O Wilson", "EDWARD Wilson"))
   }
 
   test("Correct joined middle initial is compatible with full name") {
-    assertCanonicalCompatible("Edward O. Wilson", "EO Wilson")
+    assert(canonicalCompatible("Edward O. Wilson", "EO Wilson"))
   }
 
   test("Wrong joined middle initial is incompatible with full name") {
-    assertNotCanonicalCompatible("Edward O. Wilson", "EQ Wilson")
+    assert(notCanonicalCompatible("Edward O. Wilson", "EQ Wilson"))
   }
 
   test("Lower-case middle names are interpreted as particles") {
@@ -328,20 +396,24 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
   test("Names with particles are compatible with names missing particles") {
-    assertCanonicalCompatible("Jacqueline du Pre", "Jacqueline Pre")
+    assert(canonicalCompatible("Jacqueline du Pre", "Jacqueline Pre"))
   }
 
   // https://github.com/AnaMarjanica/name-compare/blob/master/src/test/scala/hr/element/etb/name_compare/FuzzyStringTest.scala
   test("Names are compatible with deaccented versions") {
-    assertCanonicalCompatible("Ana Durić", "Ana Duric")
+    assert(canonicalCompatible("Ana Durić", "Ana Duric"))
   }
 
   test("Names with particles and accents are compatible with simplified variant") {
-    assertCanonicalCompatible("Jacqueline du Pré", "Jacqueline Pre")
+    assert(canonicalCompatible("Jacqueline du Pré", "Jacqueline Pre"))
   }
 
   test("Solid-caps names are compatible with normal variant") {
-    assertCanonicalCompatible("KERMIT THE FROG", "Kermit T. Frog")
+    assert(canonicalCompatible("KERMIT THE FROG", "Kermit T. Frog"))
+  }
+
+  test("Hyphenated first name compatible with different middle initial") {
+    assert(canonicalCompatible("Peggy-Sue Smith", "PQ Smith"))
   }
 
 

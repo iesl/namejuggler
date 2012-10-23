@@ -178,6 +178,7 @@ object PersonNameParser extends Logging {
 
 
   private def massageGivenNames(maybePunct: Seq[String]): Seq[String] = {
+    // TODO what about hyphenated names?
     val rawGivenNames = maybePunct.map(_.maskPunctuation).flatMap(_.split(" "))
     val result = if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
       // interpret solid caps as initials

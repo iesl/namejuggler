@@ -15,6 +15,6 @@ object NameJugglerBuild extends Build
 
 	val deps = Seq(ieslScalaCommons("latest.integration"), scalatest(),commonsLang())
 
-	lazy val namejuggler = IeslProject("namejuggler", vers, deps, Public, WithSnapshotDependencies)
+	lazy val namejuggler = Project("namejuggler",file(".")).ieslSetup(vers, deps, Public, WithSnapshotDependencies)
 	                      .settings(assemblySettings: _*).cleanLogging.standardLogging
 }
