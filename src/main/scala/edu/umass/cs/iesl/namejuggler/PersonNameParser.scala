@@ -111,9 +111,9 @@ object PersonNameParser extends Logging {
     }
   }
 
-  def fixCaps(s: String) : String = if (s.isMixedCase) s else s.toLowerCase.capitalize
+  def fixCaps(s: String): String = if (s.isMixedCase) s else s.toLowerCase.capitalize
 
-  def fixCapsExceptParticles(ss: String) : String = ss.split(" ").map(s => {
+  def fixCapsExceptParticles(ss: String): String = ss.split(" ").map(s => {
     if (isSurnameParticle(s)) s.toLowerCase else if (s.isMixedCase) s else s.toLowerCase.capitalize
   }).mkString(" ")
 
@@ -130,7 +130,7 @@ object PersonNameParser extends Logging {
     val containsLowerCase = s.containsLowerCase
     val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes, containsLowerCase)
 
-    val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.split(" ").map(_.trim).filter(_.nonEmpty))
+    val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.replace(".", ". ")).map(_.split(" ").map(_.trim).filter(_.nonEmpty))
 
     val coreName: PersonName = {
       if (coreToks.size == 0) {
@@ -179,7 +179,10 @@ object PersonNameParser extends Logging {
 
   private def massageGivenNames(maybePunct: Seq[String]): Seq[String] = {
     // TODO what about hyphenated names?
-    val rawGivenNames = maybePunct.map(_.maskPunctuation).flatMap(_.split(" "))
+
+    // we mask only periods, not _.maskPunctuation, because of hyphenated names
+
+    val rawGivenNames = maybePunct.map(_.s.replaceAll("\\.+", " ")).flatMap(_.split(" ")).filterNot(_.isEmpty)
     val result = if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
       // interpret solid caps as initials
       rawGivenNames(0).stripPunctuation.split("").filter(_.nonEmpty).toSeq.map(_ + ".")
@@ -203,11 +206,22 @@ object PersonNameParser extends Logging {
 
     // ** detect initials
 
+    // if there is one token, expand it
+    // if there are two tokens, expand the first
+    // if there are three tokens, expand the first two (probably one or the other but not both...)
+    // if there are more than three, expand none.
+
+    val nameTokensInitialsFixed: Traversable[String] = nameTokens.size match {
+      case 1 => nameTokens flatMap expandInitials
+      case 2 => expandInitials(nameTokens.head) ++ nameTokens.tail
+      case 3 => expandInitials(nameTokens.head) ++ expandInitials(nameTokens.tail.head) ++ nameTokens.tail.tail
+      case _ => nameTokens
+    }
     // if a particle appears capitalized but not in the first position, lowercase it.
     // so "la Silva" will be interpereted as a surname only; Charlie La Silva turns into Charlie La Silva, but
     // "Van Morrison" is left alone
 
-    val nameTokensParticlesFixed : List[String] = List(nameTokens.head) ++ (nameTokens.tail map fixParticle)
+    val nameTokensParticlesFixed: List[String] = List(nameTokensInitialsFixed.head) ++ (nameTokensInitialsFixed.tail map fixParticle)
 
     val (givenR, sur) = splitOnCondition((s: String) => (s.isAllLowerCase))(Nil, nameTokensParticlesFixed)
 
@@ -219,6 +233,10 @@ object PersonNameParser extends Logging {
         massageGivenNames(maybePunct)
       }
     }
+  }
+
+  private def expandInitials(s: String): Traversable[String] = {
+    if (s.s.isAllUpperCase && s.length <= 4) s.split("").toSeq.filterNot(_==".").map(_ + ".") else Some(s)
   }
 
   @tailrec

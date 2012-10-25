@@ -201,7 +201,8 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     val n = PersonNameWithDerivations("J A S".n).inferFully
     assert(n.firstName === "J.".opt)
     assert(n.givenInitials === "J. A.".opt)
-    assert(n.surNames.contains("S.".n))
+    assert(n.allInitials === "J. A. S.".opt)
+    assert(n.surNames.contains("S".n))
   }
 
   test("Particle preceding surname is detected if lowercase") {
@@ -281,7 +282,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   }
 
   test("Middle initials must match") {
-    assert(canonicalCompatible("JQS", "JPS"))
+    assert(notCanonicalCompatible("JQS", "JPS"))
   }
 
   test("Last names must match") {
@@ -414,6 +415,20 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
   test("Hyphenated first name compatible with different middle initial") {
     assert(canonicalCompatible("Peggy-Sue Smith", "PQ Smith"))
+  }
+
+  test("Last initial of name starting with Mc, Mac, or O etc. is just M or O respectively") {
+    assert(canonicalCompatible("Padraic O'Brian", "PO"))
+    assert(canonicalCompatible("Padraic MacDonald", "PM"))
+  }
+  test("Root initial of name starting with Mc, Mac, or O etc. is not recognized") {
+    assert(notCanonicalCompatible("Padraic O'Brian", "PB"))
+    assert(notCanonicalCompatible("Padraic MacDonald", "PD"))
+  }
+
+  test("Extended-form initials of name starting with Mc, Mac, or O etc. are not recognized") {
+    assert(notCanonicalCompatible("Padraic O'Brian", "P O'B"))
+    assert(notCanonicalCompatible("Padraic MacDonald", "P MacD"))
   }
 
 
