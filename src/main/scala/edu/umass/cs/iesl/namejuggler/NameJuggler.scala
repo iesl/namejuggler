@@ -24,9 +24,15 @@ object NameJuggler extends Logging {
         //for (x <- result.keys) println(x + "\t" + result(x).mkString("\t"))
 
         logger.debug("Testing compability among " + names.size + " parsed names.")
-        val (cliques, transitive) = NameCliquer.findCompatibilityGroups(z)
+        val (cliques, transitiveEdgeLists) = NameCliquer.findCompatibilityGroups(z)
         for (c <- cliques) println("CLIQUE\t" + c.mkString("\t"))
-        for (c <- transitive) println("TRANS\t" + c.mkString("\t"))
+        //for (c <- transitive) println("TRANS\t" + c.mkString("\t"))
+
+        for (c <- transitiveEdgeLists) {
+          println("graph TRANS {")
+          for ((a, b) <- c) println(a + " -- " + b + ";")
+          println("}")
+        }
 
       }
     }
@@ -47,13 +53,20 @@ object NameCliquer extends Logging {
   def isClique(nodes: Set[String], adjacency: Map[String, Set[String]]): Boolean =
     nodes.find(n => !((nodes - n) subsetOf adjacency(n))).isEmpty
 
-
-  def findCompatibilityGroups(namesWithParsed: Seq[(String, CanonicalPersonName)]): (Set[Set[String]], Set[Set[String]]) = {
+  def findCompatibilityGroups(namesWithParsed: Seq[(String, CanonicalPersonName)]): (Set[Set[String]], Set[Set[(String, String)]]) = {
     val adjacency = allVsAllCompatibility(namesWithParsed)
     logger.debug("found " + adjacency.size + " pairwise compatibilities among " + namesWithParsed.size + " nodes.")
     val partitions = findPartitions(adjacency)
     logger.debug("found " + partitions.size + " partitions.")
-    partitions.partition(isClique(_, adjacency))
+    val (cliques, transitive) = partitions.partition(isClique(_, adjacency))
+    val transitiveEdgeLists = for (p <- transitive) yield {
+      (for (n <- p) yield {
+        adjacency(n) map (b => {
+          if (n < b) (n, b) else (b, n)
+        })
+      }).flatten
+    }
+    (cliques, transitiveEdgeLists)
   }
 
   private def findPartitions[A](adjacency: Map[A, Set[A]]): Set[Set[A]] = {
@@ -91,11 +104,11 @@ object NameCliquer extends Logging {
     (members.toSet, adjacency -- members)
   }
 
-   def allVsAllCompatibility(namesWithParsed: Seq[(String, CanonicalPersonName)]): Map[String, Set[String]] = {
+  def allVsAllCompatibility(namesWithParsed: Seq[(String, CanonicalPersonName)]): Map[String, Set[String]] = {
 
     logger.debug("Testing compability among " + namesWithParsed.size + " names.")
 
-    val accum: mutable.Map[String, mutable.Set[String]] = mutable.Map() ++ (for((s,c) <- namesWithParsed) yield (s,mutable.Set[String]()))
+    val accum: mutable.Map[String, mutable.Set[String]] = mutable.Map() ++ (for ((s, c) <- namesWithParsed) yield (s, mutable.Set[String]()))
 
     allVsAllCompatibility(namesWithParsed, accum)
     val twiceLinks: Int = accum.map(_._2.size).sum
@@ -122,8 +135,8 @@ object NameCliquer extends Logging {
         // would be nice to parallelize here, but that makes a mess updating the mutable sets.  Needs refactor...
         for ((bOrig, bParsed) <- rest if (aParsed compatibleWith bParsed)) {
           logger.debug("Found compatible pair: " + aOrig + "  |  " + bOrig)
-          accum.getOrElseUpdate(aOrig,mutable.Set[String]()) += (bOrig)
-          accum.getOrElseUpdate(bOrig,mutable.Set[String]()) += (aOrig)
+          accum.getOrElseUpdate(aOrig, mutable.Set[String]()) += (bOrig)
+          accum.getOrElseUpdate(bOrig, mutable.Set[String]()) += (aOrig)
         }
         allVsAllCompatibility(rest, accum)
     }
