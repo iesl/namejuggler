@@ -77,8 +77,9 @@ object PersonNameParser extends Logging {
         }
         def rejectDegree: (Option[NonemptyString], Set[NonemptyString], String) = (None, Set.empty, s)
 
-        val lastNameOnlyBeforeComma = !remainder.trim.takeWhile(_ != ',').contains(" ")
-        val hasFirstName = remainder.contains(" ") && !lastNameOnlyBeforeComma
+        val lastNameOnlyBeforeComma = !remainder.trim.takeWhile(_ != ',').contains(" ")  // look for Smith, John, MD.
+        //val hasFirstName = remainder.contains(" ") && !lastNameOnlyBeforeComma
+        val hasFirstName = (remainder.split(" ").filterNot(isSurnameParticle).size > 1) && !lastNameOnlyBeforeComma
 
         (hasFirstName, remainder.contains(","), separator.contains(",")) match {
           // if there are two commas, anything after the second is a degree.
