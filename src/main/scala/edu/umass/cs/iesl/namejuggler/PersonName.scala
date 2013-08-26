@@ -2,7 +2,7 @@ package edu.umass.cs.iesl.namejuggler
 
 import edu.umass.cs.iesl.scalacommons.StringUtils._
 import edu.umass.cs.iesl.scalacommons.{SeqUtils, StringUtils, OptionUtils, NonemptyString}
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 
 object PersonName {
   /**

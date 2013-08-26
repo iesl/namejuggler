@@ -1,6 +1,6 @@
 package edu.umass.cs.iesl.namejuggler
 
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.scalatest.{FunSuite, BeforeAndAfter}
 import edu.umass.cs.iesl.scalacommons.{NonemptyString, StringUtils}
 

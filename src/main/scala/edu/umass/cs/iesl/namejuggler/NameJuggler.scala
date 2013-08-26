@@ -7,7 +7,7 @@ import annotation.tailrec
 import collection.mutable
 import scala.Predef._
 import edu.umass.cs.iesl.scalacommons.SeqUtils
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 
 /**
  * @author <a href="mailto:dev@davidsoergel.com">David Soergel</a>

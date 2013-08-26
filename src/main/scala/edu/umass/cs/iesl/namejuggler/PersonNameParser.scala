@@ -3,7 +3,7 @@ package edu.umass.cs.iesl.namejuggler
 import edu.umass.cs.iesl.scalacommons.NonemptyString
 import edu.umass.cs.iesl.scalacommons.StringUtils._
 import scala.MatchError
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import annotation.tailrec
 
 /**
