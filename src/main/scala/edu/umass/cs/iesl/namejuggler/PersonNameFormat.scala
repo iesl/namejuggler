@@ -38,16 +38,16 @@ object PersonNameFormat extends Logging {
     Seq("van", "von", "der", "de", "du", "da", "la", "del", "ter", "bin", "della")
 
   def isPrefix(s: String): Boolean = {
-    s.trim.nonEmpty && (allValidPrefixes.contains(s.toLowerCase))
+    !s.trim.isEmpty && (allValidPrefixes.contains(s.trim.toLowerCase))
   }
 
   def isHereditySuffix(s: String): Boolean = {
-    s.trim.nonEmpty && (validHereditySuffixes.contains(s))
+    !s.trim.isEmpty  && (validHereditySuffixes.contains(s.trim))
   }
 
 
   def isSurnameParticle(s: String): Boolean = {
-    s.trim.nonEmpty && (validSurnameParticles.contains(s))
+    !s.trim.isEmpty  && (validSurnameParticles.contains(s.trim))
   }
 
   def isSurnameParticleNoCase(s:String):Boolean = isSurnameParticle(s.toLowerCase)
@@ -77,7 +77,7 @@ object PersonNameFormat extends Logging {
       val stringMatch = allValidDegrees.contains(s)
 
       val caseSuggestive = s match {
-        case consecutiveUpperCasePattern(c) => c.nonEmpty && containsLowerCase
+        case consecutiveUpperCasePattern(c) => !c.isEmpty && containsLowerCase
         case _ => false
       }
 

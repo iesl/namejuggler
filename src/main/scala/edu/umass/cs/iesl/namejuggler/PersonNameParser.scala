@@ -131,7 +131,7 @@ object PersonNameParser extends Logging {
     val containsLowerCase = s.containsLowerCase
     val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes, containsLowerCase)
 
-    val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.replace(".", ". ")).map(_.split(" ").map(_.trim).filter(_.nonEmpty))
+    val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.replace(".", ". ")).map(_.split(" ").map(_.trim).filter(!_.isEmpty))
 
     val coreName: PersonName = {
       if (coreToks.size == 0) {
@@ -186,7 +186,7 @@ object PersonNameParser extends Logging {
     val rawGivenNames = maybePunct.map(_.s.replaceAll("\\.+", " ")).flatMap(_.split(" ")).filterNot(_.isEmpty)
     val result = if (rawGivenNames.size == 1 && rawGivenNames(0).isAllUpperCase && rawGivenNames(0).length < 4) {
       // interpret solid caps as initials
-      rawGivenNames(0).stripPunctuation.split("").filter(_.nonEmpty).toSeq.map(_ + ".")
+      rawGivenNames(0).stripPunctuation.split("").filter(!_.isEmpty).toSeq.map(_ + ".")
     }
     else {
       rawGivenNames.map({
