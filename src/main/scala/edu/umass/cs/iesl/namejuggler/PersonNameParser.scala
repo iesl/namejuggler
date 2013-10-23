@@ -60,6 +60,10 @@ object PersonNameParser extends Logging {
         // combine heredity suffixes into a single string
         (Seq(h, f).flatten.mkString(" "), d, r)
       }
+        else if (isGivenNames(lastToken)) {
+        logger.debug("Found given names in '" + s + "': '" + lastToken + "'")
+        (None,Set.empty,s)
+      }
 
       // it can be hard to distinguish degrees from middle initials.
       // Is Smith, John RN == John R. N. Smith, or John Smith, RN?
@@ -68,16 +72,22 @@ object PersonNameParser extends Logging {
 
       else {
         def acceptDegree: (Option[NonemptyString], Set[NonemptyString], String) = {
-
           logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
           val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
           val f: Option[NonemptyString] = fixDegree(lastToken)
           f.map(ne => (h, d + ne, r)).getOrElse((h, d, r))
-
         }
         def rejectDegree: (Option[NonemptyString], Set[NonemptyString], String) = (None, Set.empty, s)
 
-        val lastNameOnlyBeforeComma = !remainder.trim.takeWhile(_ != ',').contains(" ")  // look for Smith, John, MD.
+        // look for Smith, John, MD.
+        val lastNameOnlyBeforeComma = {
+          val beforeComma = remainder.trim.takeWhile(_ != ',')
+          val beforeCommaTokens: Array[String] = beforeComma.split(" ")
+          val result = isSurnameParticleNoCase(beforeCommaTokens.head) || beforeCommaTokens.size == 1
+          result
+        } 
+        
+        
         //val hasFirstName = remainder.contains(" ") && !lastNameOnlyBeforeComma
         val hasFirstName = (remainder.split(" ").filterNot(isSurnameParticle).size > 1) && !lastNameOnlyBeforeComma
 

@@ -203,7 +203,7 @@ trait CanonicalPersonName extends PersonName with Logging {
     } else {
       Set(s, deAccented)
     }
-    base.map(_.toLowerCase).flatMap(removeParticles).flatMap(splitHyphenated)
+    base.map(_.toLowerCase).flatMap(removeParticles).flatMap(splitOnWhitespace).flatMap(splitOnHyphens)
   }
 
   private def removeParticles(s: String): Set[String] = {
@@ -211,8 +211,15 @@ trait CanonicalPersonName extends PersonName with Logging {
     result.map(_.mkString(" ")).toSet
   }
 
-  private def splitHyphenated(s: String): Set[String] = {
+  private def splitOnHyphens(s: String): Set[String] = {
     s.s.split("-").toSet
+  }
+  private def splitOnWhitespace(s: String): Set[String] = {
+    s.s.split("\\s").toSet
+  }
+
+  private def splitOnSpacesAndHyphens(s: String): Set[String] = {
+    s.s.split("[ -]").toSet
   }
 
 }

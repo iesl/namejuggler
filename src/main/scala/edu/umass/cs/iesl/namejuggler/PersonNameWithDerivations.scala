@@ -58,6 +58,7 @@ trait PersonNameWithDerivations extends PersonName {
   def middleInitials: Option[NonemptyString] = None
 
   // van Dyke = v.D. ?
+  // de Arajuna Barbosa = D.?  de A. B.?  A.?  A. B.?
   def lastInitial: Option[NonemptyString] = None
 
   // initials may be for full name, or just given names (e.g., from PubMed)
@@ -156,6 +157,9 @@ class CanonicalPersonNameWithDerivations(n: CanonicalPersonName) extends Canonic
   // is Amanda Jones-Albrecht => A. J. or A. J.-A. or what?
   // yuck
   //** for now, just take the first capital letter from the longest surname
+  
+  // todo: make a set of reasonable lastInitials
+  
   override lazy val lastInitial: Option[NonemptyString] = longestSurName.map(x => NonemptyString((("[A-Z]".r findAllIn x.s).toSeq)(0) + "."))
   override lazy val givenInitials: Option[NonemptyString] = List(firstInitial, middleInitials).flatten.mkString(" ").trim
   override lazy val allInitials: Option[NonemptyString] = List(firstInitial, middleInitials, lastInitial).flatten.mkString(" ").trim

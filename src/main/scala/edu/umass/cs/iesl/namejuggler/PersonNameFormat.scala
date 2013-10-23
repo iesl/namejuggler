@@ -35,7 +35,7 @@ object PersonNameFormat extends Logging {
 
   // ** add more
   private val validSurnameParticles =
-    Seq("van", "von", "der", "de", "du", "da", "la", "del", "ter", "bin", "della")
+    Seq("van", "von", "der", "de", "du", "da", "di", "do", "la", "del", "della", "ter", "bin", "ben")
 
   def isPrefix(s: String): Boolean = {
     !s.trim.isEmpty && (allValidPrefixes.contains(s.trim.toLowerCase))
@@ -52,6 +52,10 @@ object PersonNameFormat extends Logging {
 
   def isSurnameParticleNoCase(s:String):Boolean = isSurnameParticle(s.toLowerCase)
 
+  def isGivenNames(s:String):Boolean = {
+    (Lexicons.firstnameHighest.countTokenMatchesLC(s) + Lexicons.firstnameHigh.countTokenMatchesLC(s)) > 0
+  }
+  
   def fixParticle(s:String) : String = {
     val lc = s.toLowerCase
     if (isSurnameParticle(lc)) lc else s

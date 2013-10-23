@@ -107,7 +107,91 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
       assert(inferred.bestFullName === "Dr. Kermit T. Frog III, M.D., Ph.D.".opt)
     }
   }
+  
+  test("1") {
+    val inferred = PersonNameWithDerivations("de Araujo Barbosa, Pedranne Kelle".n).inferFully
+    assert(inferred.givenNames === Seq("Pedranne".n, "Kelle".n))
+    assert(inferred.surNames === Set("de Araujo Barbosa".n))
+    assert(inferred.allInitials === "P. K. A.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.prefixes === Set.empty)
+    assert(inferred.degrees === Set.empty)
+    assert(inferred.hereditySuffix === None)
+    assert(inferred.bestFullName === "Pedranne Kelle de Araujo Barbosa".opt)
+  }
 
+  test("2") {
+    val inferred = PersonNameWithDerivations("Di Stefano, Rossella".n).inferFully
+    assert(inferred.givenNames === Seq("Rossella".n))
+    assert(inferred.surNames === Set("Di Stefano".n))
+    assert(inferred.allInitials === "R. D.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.prefixes === Set.empty)
+    assert(inferred.degrees === Set.empty)
+    assert(inferred.hereditySuffix === None)
+    assert(inferred.bestFullName === "Rossella Di Stefano".opt)
+  }
+
+  test("3") {
+    val inferred = PersonNameWithDerivations("Ben Abdallah, I".n).inferFully
+    assert(inferred.givenNames === Seq("I.".n))
+    assert(inferred.surNames === Set("Ben Abdallah".n))
+    assert(inferred.allInitials === "I. B.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.prefixes === Set.empty)
+    assert(inferred.degrees === Set.empty)
+    assert(inferred.hereditySuffix === None)
+    assert(inferred.bestFullName === "I. Ben Abdallah".opt)
+  }
+
+  test("3b") {
+    val inferred = PersonNameWithDerivations("Ben Abdallah".n).inferFully
+    assert(inferred.givenNames === Seq("Ben".n))
+    assert(inferred.surNames === Set("Abdallah".n))
+    assert(inferred.allInitials === "B. A.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.prefixes === Set.empty)
+    assert(inferred.degrees === Set.empty)
+    assert(inferred.hereditySuffix === None)
+    assert(inferred.bestFullName === "Ben Abdallah".opt)
+  }
+
+  test("4") {
+    val inferred = PersonNameWithDerivations("Angeles Jimenez-Sousa, Maria".n).inferFully
+    assert(inferred.givenNames === Seq("Maria".n))
+    assert(inferred.surNames === Set("Angeles Jimenez-Sousa".n)) // ,"Angeles".n,"Jimenez-Sousa".n))  // surname splitting is done within the compatibility test
+    assert(inferred.allInitials === "M. A.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.prefixes === Set.empty)
+    assert(inferred.degrees === Set.empty)
+    assert(inferred.hereditySuffix === None)
+    assert(inferred.bestFullName === "Maria Angeles Jimenez-Sousa".opt)
+  }
+  
+  test("4b") {
+    assert(canonicalCompatible("Angeles Jimenez-Sousa, Maria", "M. Jimenez"))
+  }
+
+  test("4c") {
+    assert(canonicalCompatible("Angeles Jimenez-Sousa, Maria", "M. Q. Jimenez"))  // because the full name specifies no middle
+  }
+
+  test("4d") {
+    assert(notCanonicalCompatible("Angeles Jimenez-Sousa, Maria", "Q. Jimenez"))
+  }
+  test("4e") {
+    assert(notCanonicalCompatible("Angeles Jimenez-Sousa, Maria", "A. Jimenez"))  // because Angeles is not a given name
+  }
+
+
+  test("5") {
+    val inferred = PersonNameWithDerivations("do Nascimento, Claudia Oller".n).inferFully
+    assert(inferred.givenNames === Seq("Claudia".n, "Oller".n))
+    assert(inferred.surNames === Set("do Nascimento".n))
+    assert(inferred.allInitials === "C. O. N.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.prefixes === Set.empty)
+    assert(inferred.degrees === Set.empty)
+    assert(inferred.hereditySuffix === None)
+    assert(inferred.bestFullName === "Claudia Oller do Nascimento".opt)
+  }
+  
+  
+  
 
 
   test("Solid-caps formatted complex names are parsed as expected") {
@@ -283,6 +367,11 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
   test("Middle initials must match") {
     assert(notCanonicalCompatible("JQS", "JPS"))
+  }
+  
+  test("6") {
+    assert(notCanonicalCompatible("P. D. I. Richardson", "P. F. Richardson"))
+    assert(notCanonicalCompatible("K. T. Frog", "K. Q. Frog"))
   }
 
   test("Last names must match") {
