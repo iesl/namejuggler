@@ -8,7 +8,7 @@ import org.apache.commons.lang.StringEscapeUtils
 object PersonNameWithDerivations {
   def apply(s: NonemptyString): PersonNameWithDerivations = {
     new PersonNameWithDerivations {
-      override val fullNames = Set(s)
+      override val originalFullNames = Set(s)
     }
   }
 
@@ -42,7 +42,8 @@ object PersonNameWithDerivations {
       override lazy val middleNames : scala.Seq[NonemptyString]= SeqUtils.mergeWarn[NonemptyString,Seq[NonemptyString]](primary.middleNames, secondary.middleNames)
 
       // various representations of full name may be present in a single mention (e.g., a metadata xml file)
-      override lazy val fullNames = primary.fullNames ++ secondary.fullNames
+      override lazy val originalFullNames = primary.originalFullNames ++ secondary.originalFullNames
+      override lazy val derivedFullNames = primary.derivedFullNames ++ secondary.derivedFullNames
     }
   }
 }
@@ -74,13 +75,16 @@ trait PersonNameWithDerivations extends PersonName {
   def middleNames: Seq[NonemptyString] = Nil
 
   // various representations of full name may be present in a single mention (e.g., a metadata xml file)
-  def fullNames: Set[NonemptyString] = Set.empty
+  def originalFullNames: Set[NonemptyString] = Set.empty
+  def derivedFullNames: Set[NonemptyString] = Set.empty
 
   // assume that the longest is the most informative
   final def longestSurName: Option[NonemptyString] = toCanonical.surNames.toSeq.sortBy(-_.s.size).headOption
 
   // assume that the longest is the most informative
-  final def longestFullName: Option[NonemptyString] = inferFully.fullNames.toSeq.sortBy(-_.s.size).headOption
+  final def longestOriginalFullName: Option[NonemptyString] = inferFully.originalFullNames.toSeq.sortBy(-_.s.size).headOption
+  final def longestDerivedFullName: Option[NonemptyString] = inferFully.derivedFullNames.toSeq.sortBy(-_.s.size).headOption
+  final def longestFullName: Option[NonemptyString] = (inferFully.originalFullNames.toSeq ++ inferFully.derivedFullNames.toSeq).sortBy(-_.s.size).headOption
 
   final def bestFullName: Option[NonemptyString] = inferFully.preferredFullName.orElse(longestFullName)
 
@@ -175,7 +179,7 @@ class CanonicalPersonNameWithDerivations(n: CanonicalPersonName) extends Canonic
     rebuiltFullName
     //if(rebuiltFullName.nonEmpty) Set(rebuiltFullName) else Set.empty
   }
-  override lazy val fullNames: Set[NonemptyString] = {
+  override lazy val derivedFullNames: Set[NonemptyString] = {
     preferredFullName.toSet
   }
 }

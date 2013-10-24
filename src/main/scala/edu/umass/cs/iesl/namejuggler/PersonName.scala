@@ -247,7 +247,7 @@ object InferredCanonicalPersonName {
  * @param n
  */
 class InferredCanonicalPersonName(n: PersonNameWithDerivations) extends CanonicalPersonName with Logging {
-  private val nParsedFullNames = n.fullNames.map(n => PersonNameParser.parseFullName(n))
+  private val nParsedFullNames = n.originalFullNames.map(n => PersonNameParser.parseFullName(n))
 
   // ** if the prefix is populated in more than one input, pick a random one.  Better: emit warning, choose best (?)
   override val prefixes = nParsedFullNames.flatMap(_.prefixes)

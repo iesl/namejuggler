@@ -6,6 +6,7 @@ import scala.MatchError
 import com.typesafe.scalalogging.slf4j.Logging
 import annotation.tailrec
 
+
 /**
  * @author <a href="mailto:dev@davidsoergel.com">David Soergel</a>
  * @version $Id$
@@ -19,7 +20,6 @@ object PersonNameParser extends Logging {
   import PersonNameFormat._
 
   private val splitFirst = """^(.*?)[ ]+(.*)$""".r
-  private val splitLast = """^(.*[^, ])([, ]+)(.*)$""".r
 
   def stripPrefixes(s: String): (Set[NonemptyString], String) = {
     try {
@@ -36,89 +36,176 @@ object PersonNameParser extends Logging {
     }
   }
 
+  private val splitLast = """^(.*[^, ])([, ]+)(.*)$""".r
+
+  def findHasFirstName(s:String) : Boolean = {
+    val sa = s.split(" ")
+    sa.size > 1 && !isSurnameParticle(sa.head)
+  }
+  def findHasFirstName(sa:Seq[String]) : Boolean = {
+    sa.size > 1 && !isSurnameParticle(sa.head)
+  }
+  
   /**
    * @param s
    * @param containsLowerCase
    * @return triple of (heredity suffixes, degree suffixes, core name string)
    */
-  def stripSuffixes(s: String, containsLowerCase: Boolean): (Option[NonemptyString], Set[NonemptyString], String) = {
-    try {
-      val splitLast(remainder, separator, lastToken) = s.trim
+  def stripSuffixes(s: String, containsLowerCase: Boolean): (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = {
+    // the last token may be separated by a space or a comma, and it's often not meaningful either way.
+    // e.g. Brock, Stuart, Ph.D. == Brock, Stuart PHD
+    // but Smith, John, MD PHD  is helpful
+    // what about Smith, John, Jr. (never happens?)
+
+    // anything after a second comma is a degree or a heredity suffix, whether separated by comma or space.
+    // Brock, Stuart, Ph.D., III, M.D.   we even accept this!?
+
+    val tokensByCommas = s.split(",").map(_.trim)
+    if (tokensByCommas.length == 1) {
+      stripSuffixesNoCommas(tokensByCommas(0), containsLowerCase, false, findHasFirstName(tokensByCommas(0)))
+    }
+    else if (tokensByCommas.length == 2) {
+      val preComma = tokensByCommas(0)
+      val postComma = tokensByCommas(1) // we know this will resolve
+      stripSuffixesOneComma(preComma, postComma, containsLowerCase)
+    }
+    else {
+      //if(tokensByCommas.length > 2) {
+
+      // look for Smith, John, MD PHD
+
+      val degreesOrHereditySuffixes = tokensByCommas.drop(2).flatMap(_.split(" ")).flatMap(_.opt)
+      val (hereditySuffixes, degrees) = degreesOrHereditySuffixes.partition(x => isHereditySuffix(x.s))
+      val preComma = tokensByCommas(0)
+      val postComma = tokensByCommas(1) // we know this will resolve
+      val (h, d, r) = stripSuffixesOneComma(preComma, postComma, containsLowerCase)
+      (h.map(x => x +: hereditySuffixes).getOrElse(hereditySuffixes).mkString(" "), d ++ (degrees.map(x=>fixDegree(x).n)), r)
+    }
+  }
+
+
+  def stripSuffixesOneComma(preComma: String, postComma: String, containsLowerCase: Boolean): (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = {
+
+    // Garcia Molina, Hector Alvarez
+    // Garcia Molina, Hector Alvarez Ph.D.  ** don't accept; degree requires comma if name is inverted.
+    // Garcia Molina, Hector Alvarez III  ** don't accept; heredity requires comma if name is inverted.
+
+    // Garcia Molina, Bargle Greeber   ** not detected as given names
+
+    // Alvarez de Garcia Molina, Hector III  ** don't accept; heredity requires comma if name is inverted.
+
+    if (isGivenNames(postComma)) {
+      val s = preComma + ", " + postComma // don't uninvert here, because that loses the given vs. last distinction useful later.
+      logger.debug("Found given names in '" + s + "': '" + postComma + "'")
+      (None, Set.empty, s)
+    }
+    else {
+      val hasFirstName = findHasFirstName( preComma)
+      val (preh, pred, prer) = stripSuffixesNoCommas(preComma, containsLowerCase, false, hasFirstName)
+      val (posth, postd, postr) = stripSuffixesNoCommas(postComma, containsLowerCase, true, hasFirstName)
+      (Seq(preh, posth).flatten.mkString(" "), pred ++ postd, Seq(prer, postr).flatten.mkString(", "))
+      /*
+      // lop off one space token and try again
+
+      val postCommaSpaceTokens: Array[String] = postComma.split(" ")
+      val lastSpaceToken = postCommaSpaceTokens.last
+      
+      val degreesOrHereditySuffixes = postComma
+      
+      
+      
+      val lastNameOnlyBeforeComma = {
+        val preCommaTokens: Array[String] = preComma.split(" ")
+        val result = isSurnameParticleNoCase(preCommaTokens.head) || preCommaTokens.size == 1
+        result
+      }
+      if(lastNameOnlyBeforeComma) {
+        
+      }*/
+    }
+  }
+
+  def stripSuffixesNoCommas(s: String, containsLowerCase: Boolean, isPostComma: Boolean, hasFirstName: Boolean): (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = {
+    val spaceTokens = s.split(" ")
+    stripSuffixesNoCommas(spaceTokens, containsLowerCase, isPostComma, hasFirstName)
+  }
+
+  def stripSuffixesNoCommas(spaceTokens: Seq[String], containsLowerCase: Boolean, isPostComma: Boolean, hasFirstName: Boolean): (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = {
+
+    if (spaceTokens.size == 0) {
+      (None, Set.empty, "")
+    }
+
+    else if (spaceTokens.size == 1) {
+      val t = spaceTokens(0).n
+      if (isPostComma && likelyDegree(t, containsLowerCase, hasFirstName)) (None, Set(fixDegree(t.s).n), "")
+      else (None, Set.empty, Some(t))
+    }
+    else {
+      //} if (spaceTokens.size > 1) {
+
+
+      val lastToken = spaceTokens.last
+      val preLastTokens = spaceTokens.dropRight(1)
+
+      // now that commas are dealt with separately, this just grabs the last space token
+      //val splitLast(preLastToken, separator, lastToken) = s.trim
+
       if (lastToken.isEmpty) {
         // anomalous name ending in comma; just drop it
-        stripSuffixes(remainder, containsLowerCase)
+        stripSuffixesNoCommas(preLastTokens, containsLowerCase, isPostComma, hasFirstName)
       }
+
       else if (isHereditySuffix(lastToken)) {
-        logger.debug("Found heredity suffix in '" + s + "': '" + lastToken + "'")
-        val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
+        // logger.debug("Found heredity suffix in '" + s + "': '" + lastToken + "'")
+        val (h, d, r) = stripSuffixesNoCommas(preLastTokens, containsLowerCase, isPostComma, hasFirstName)
         val f: Option[NonemptyString] = lastToken
         if (h.nonEmpty) {
           //throw new PersonNameParsingException("More than one heredity suffix: " + s)
-          logger.warn("More than one heredity suffix: " + s)
+          logger.warn("More than one heredity suffix: " + spaceTokens.mkString(" "))
         }
 
         // combine heredity suffixes into a single string
         (Seq(h, f).flatten.mkString(" "), d, r)
       }
-        else if (isGivenNames(lastToken)) {
-        logger.debug("Found given names in '" + s + "': '" + lastToken + "'")
-        (None,Set.empty,s)
-      }
 
-      // it can be hard to distinguish degrees from middle initials.
+
+      // we don't immediately run isDegree here, because it can be hard to distinguish degrees from middle initials.
+      // hence the name "likelyDegree" for that function.  Any anyway we need to use context clues.
       // Is Smith, John RN == John R. N. Smith, or John Smith, RN?
       // we interpret that case as middle initials, but Smith, John, RN as a degree.
       // what about Smith, JR ?
 
       else {
-        def acceptDegree: (Option[NonemptyString], Set[NonemptyString], String) = {
-          logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
-          val (h, d, r) = stripSuffixes(remainder, containsLowerCase)
+        def acceptDegree: (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = {
+          //logger.debug("Found degree in '" + s + "': '" + lastToken + "'")
+          val (h, d, r) = stripSuffixesNoCommas(preLastTokens, containsLowerCase, isPostComma, hasFirstName)
           val f: Option[NonemptyString] = fixDegree(lastToken)
           f.map(ne => (h, d + ne, r)).getOrElse((h, d, r))
         }
-        def rejectDegree: (Option[NonemptyString], Set[NonemptyString], String) = (None, Set.empty, s)
+        def rejectDegree: (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = (None, Set.empty, spaceTokens.mkString(" "))
 
-        // look for Smith, John, MD.
-        val lastNameOnlyBeforeComma = {
-          val beforeComma = remainder.trim.takeWhile(_ != ',')
-          val beforeCommaTokens: Array[String] = beforeComma.split(" ")
-          val result = isSurnameParticleNoCase(beforeCommaTokens.head) || beforeCommaTokens.size == 1
-          result
-        } 
-        
-        
-        //val hasFirstName = remainder.contains(" ") && !lastNameOnlyBeforeComma
-        val hasFirstName = (remainder.split(" ").filterNot(isSurnameParticle).size > 1) && !lastNameOnlyBeforeComma
+        // Garcia Molina, Beeblebrox   (first name not detected by isGivenName)
+        val lastTokenCouldPossiblyBeADegree = lastToken.length < 6
 
-        (hasFirstName, remainder.contains(","), separator.contains(",")) match {
-          // if there are two commas, anything after the second is a degree.
-          case (_, true, true) => acceptDegree // Smith, John, MD
-
-          // if there is a first name and one comma, anything after the comma is a degree
-          case (true, false, true) => acceptDegree //John Smith, MD
-          case (true, true, false) => acceptDegree // John Smith, MD PhD.  Smith, John Q.
+        if (!lastTokenCouldPossiblyBeADegree) rejectDegree // Smith, MD is M. D. Smith.   de Broeck, Ph.D.  never happens.
+        else {
+          //val spaceTokens: Array[String] = preLastToken.split(" ")
+          val hasFirstNameLocal = findHasFirstName(preLastTokens) // preLastTokens.size > 0 && !isSurnameParticle(preLastTokens.head)
 
           // if there is a first name and no comma, then the degree might be detected based on capitalization
-          case (true, false, false) if likelyDegree(lastToken, containsLowerCase) => acceptDegree // John Smith MD
+          if ((isPostComma || hasFirstNameLocal) && likelyDegree(lastToken, containsLowerCase, hasFirstName || hasFirstNameLocal)) {
+            acceptDegree // John Smith MD 
+          } else {
+            // if there is no first name and no comma, then any lastToken could be an inverted given name or initials,
+            // e.g. Smith JA, so the only way to detect a degree is by lexicon or maybe a pronouncability measure
+            rejectDegree // Smith JA
+          }
 
-          // if there is no first name and no comma, then any lastToken could be an inverted given name or initials,
-          // e.g. Smith JA, so the only way to detect a degree is by lexicon or maybe a pronouncability measure
-          case (false, false, false) => rejectDegree // Smith JA
-
-          // if there is no first name but one comma, it's the same deal
-          case (false, false, true) => rejectDegree // Smith, JA.   Doesn't catch Smith, M.D. but who writes that?
-
-          // no first name, a comma in the remainder, and no comma in the separator
-          case (false, true, false) if likelyDegree(lastToken, containsLowerCase) => acceptDegree // Smith, John MD or Smith, John Q.
-
-          case _ => rejectDegree
         }
       }
 
-    }
-    catch {
-      case e: MatchError => (None, Set.empty, s)
+
     }
   }
 
@@ -139,9 +226,9 @@ object PersonNameParser extends Logging {
   def parseFullName(s: String): PersonName = {
     val (parsedPrefixes: Set[NonemptyString], noPrefixes: String) = stripPrefixes(s)
     val containsLowerCase = s.containsLowerCase
-    val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: String) = stripSuffixes(noPrefixes, containsLowerCase)
-
-    val coreToks: Array[Array[String]] = coreNameString.split(",").map(_.replace(".", ". ")).map(_.split(" ").map(_.trim).filter(!_.isEmpty))
+    val (parsedHereditySuffix: Option[NonemptyString], parsedDegrees: Set[NonemptyString], coreNameString: Option[NonemptyString]) = stripSuffixes(noPrefixes, containsLowerCase)
+    require(coreNameString.isDefined)
+    val coreToks: Array[Array[String]] = coreNameString.get.split(",").map(_.replace(".", ". ")).map(_.split(" ").map(_.trim).filter(!_.isEmpty))
 
     val coreName: PersonName = {
       if (coreToks.size == 0) {
@@ -247,7 +334,7 @@ object PersonNameParser extends Logging {
   }
 
   private def expandInitials(s: String): Traversable[String] = {
-    if (s.s.isAllUpperCase && s.length <= 4) s.split("").toSeq.filterNot(_==".").map(_ + ".") else Some(s)
+    if (s.s.isAllUpperCase && s.length <= 4) s.split("").toSeq.filterNot(_ == ".").map(_ + ".") else Some(s)
   }
 
   @tailrec

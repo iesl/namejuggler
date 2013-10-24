@@ -23,7 +23,7 @@ object PersonNameFormat extends Logging {
 
   private val degreeFixer = validDegrees.map(canonical => (canonical.toLowerCase.stripPunctuation, canonical)).toMap
 
-  def fixDegree(s: String) = degreeFixer.getOrElse(s.toLowerCase.stripPunctuation, s.toUpperCase)
+  def fixDegree(s: String) : String = degreeFixer.getOrElse(s.toLowerCase.stripPunctuation, s.toUpperCase)
 
   private val allValidDegrees = {
     import edu.umass.cs.iesl.scalacommons.StringUtils._
@@ -61,7 +61,7 @@ object PersonNameFormat extends Logging {
     if (isSurnameParticle(lc)) lc else s
   }
 
-  val consecutiveUpperCasePattern = "([A-Z][A-Z])".r
+  val consecutiveUpperCasePattern = ".*([A-Z][A-Z]).*".r
 
   /**
    * We can't be sure "MD" is a degree, because it could be the initials for Mark Dobson.
@@ -71,7 +71,7 @@ object PersonNameFormat extends Logging {
    * @param s
    * @return
    */
-  def likelyDegree(s: String, containsLowerCase: Boolean): Boolean = {
+  def likelyDegree(s: String, containsLowerCase: Boolean, hasFirstName: Boolean): Boolean = {
     import edu.umass.cs.iesl.scalacommons.StringUtils.enrichString
 
     if (s.stripPunctuation.size < 2) {
@@ -81,11 +81,14 @@ object PersonNameFormat extends Logging {
       val stringMatch = allValidDegrees.contains(s)
 
       val caseSuggestive = s match {
-        case consecutiveUpperCasePattern(c) => !c.isEmpty && containsLowerCase
+        case consecutiveUpperCasePattern(c) => {
+          !c.isEmpty && containsLowerCase
+        }
         case _ => false
       }
 
-      stringMatch || caseSuggestive
+      // if we haven't already found a first name somewhere else, then we should interpret this as initials.
+      stringMatch || (caseSuggestive && hasFirstName)
     }
   }
 

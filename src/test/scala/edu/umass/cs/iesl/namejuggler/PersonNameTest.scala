@@ -243,6 +243,12 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
       "J.".opt)
   }
 
+
+  test("Uninverted trailing initials interpreted as degree") {
+    assert(PersonNameWithDerivations("Isaac Newton, FRS".n).inferFully.firstName ===
+      "Isaac".opt)
+  }
+
   test("Inverted dual first initial without period mashed not interpreted as degree") {
     assert(PersonNameWithDerivations("Smith, JA".n).inferFully.firstName ===
       "J.".opt)
