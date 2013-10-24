@@ -543,6 +543,42 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     }
   }
 
+  test("Name merging doesn't get confused by lots of initials") {
+
+    val a = PersonNameWithDerivations("Mercedes Sanchis".n).inferFully
+    val b = PersonNameWithDerivations("M. V. M. Sanchis".n).inferFully
+    val c = PersonNameWithDerivations("M. J. M. Sanchis".n).inferFully
+
+    val d = PersonNameWithDerivations("Manuel Sanchis".n).inferFully
+    
+    val e = PersonNameWithDerivations("M. L. Sanchis".n).inferFully
+    val f = PersonNameWithDerivations("M. A. Sanchis".n).inferFully
+    val g = PersonNameWithDerivations("M. J. Sanchis".n).inferFully
+    
+    val h = PersonNameWithDerivations("M. Sanchis".n).inferFully
+    
+    assert(a.toCanonical compatibleWith b.toCanonical)
+    assert(a.toCanonical compatibleWith c.toCanonical)
+    assert(!(a.toCanonical compatibleWith d.toCanonical))
+    assert(a.toCanonical compatibleWith e.toCanonical)
+    assert(a.toCanonical compatibleWith f.toCanonical)
+    assert(a.toCanonical compatibleWith g.toCanonical)
+    assert(a.toCanonical compatibleWith h.toCanonical)
+
+    assert(!(b.toCanonical compatibleWith c.toCanonical))
+    assert(b.toCanonical compatibleWith d.toCanonical)
+    assert(!(b.toCanonical compatibleWith e.toCanonical))
+    assert(!(b.toCanonical compatibleWith f.toCanonical))
+    assert(!(b.toCanonical compatibleWith g.toCanonical))
+    assert(b.toCanonical compatibleWith h.toCanonical)
+    
+    val a2 = PersonNameWithDerivations.merge(a, b).inferFully
+
+    assert(!(a2.toCanonical compatibleWith c.toCanonical))
+    assert(!(c.toCanonical compatibleWith a2.toCanonical))
+  }
+  
+
 
   //  test("With inference, ames with particles are compatible with names missing particles") {assertInferredCompatible("Jacqueline du Pre", "Jacqueline Pre")}
 
