@@ -30,16 +30,70 @@ object PersonName {
 
   def merge(s: Seq[PersonName]): PersonName = s.reduceLeft[PersonName](merge)
 
+
+  // see also noMismatchingNameOrInitial
+  def combineGivenNames(a:Seq[NonemptyString],b:Seq[NonemptyString]) : Seq[NonemptyString] = {
+
+     val longer = a //.map(_.toLowerCase.stripPunctuation.n)
+     val shorter = b //.map(_.toLowerCase.stripPunctuation.n)
+
+    // should do a real alignment here
+    // instead, for now, require that every element of the shorter sequence match something in the longer sequence, in order
+
+    //val (s, l) = if (bb.length >= aa.length) (aa, bb) else (bb, aa)
+
+    def mergeGivenNamesRecursion(longer: List[NonemptyString], shorter: List[NonemptyString]): List[NonemptyString] = {
+
+      def bestIfCompatibleMaybeInitial(x: NonemptyString, y: NonemptyString): Option[NonemptyString] = {
+        val xx = x.toLowerCase.stripPunctuation
+        val yy = y.toLowerCase.stripPunctuation
+        
+        val xI = xx.s.head
+        val yI = yy.s.head
+        if(xx == yy) {
+          if(x.length > y.length) Some(x) else Some(y)
+        }
+        else if ((xx.length == 1) && xI == yI) Some(y)
+        else if ((yy.length == 1) && xI == yI) Some(x)
+        else None
+      }
+
+      if (shorter.isEmpty) longer
+      else
+      if (longer.isEmpty) shorter
+      else {
+        bestIfCompatibleMaybeInitial(longer.head, shorter.head).map(
+          x=> x :: mergeGivenNamesRecursion(longer.tail, shorter.tail) // consume head of each sequence
+        ).getOrElse(
+          mergeGivenNamesRecursion(longer.tail, shorter)// drop incompatible entry from longer sequence
+        )
+       
+      }
+    }
+    mergeGivenNamesRecursion(longer.toList, shorter.toList)
+
+  
+  }
+  
   def combineGivenNames(set: Set[Seq[NonemptyString]]): Seq[NonemptyString] = {
     // ** align all the sequences, allowing initials to align with full names, and output the consensus sequence
+    
+    // note we've already decided that these are compatible (one matching 
+    
+    val longestFirst = set.toList.sortBy((x:Seq[NonemptyString])=>{-x.length})
+    
+    val result = longestFirst.reduceLeft((a,b)=>combineGivenNames(a,b))
+    
+  result
+    
     // throw new NotImplementedException
     // ** just pick the longest for now
 
 
-    val longest = SeqUtils.argMax(set, (s: Seq[NonemptyString]) => s.map(_.length).sum)
+    //val longest = SeqUtils.argMax(set, (s: Seq[NonemptyString]) => s.map(_.length).sum)
 
     // if there is a tie, pick the one with more elements
-    SeqUtils.argMax(longest, (s: Seq[NonemptyString]) => s.size).head
+    //SeqUtils.argMax(longest, (s: Seq[NonemptyString]) => s.size).head
   }
 }
 
@@ -179,6 +233,8 @@ trait CanonicalPersonName extends PersonName with Logging {
 
     logger.debug("testing compatibility: " + this + " vs. " + other)
 
+    
+    // ** these are redundant?  Well, maybe not, due to withDerivations...
     val matchingFirst = noMismatchingNameOrInitial(allGivenAndNick, other.allGivenAndNick)
 
     val matchingMiddle = noMismatchingNameOrInitial(withDerivations.middleNames, other.withDerivations.middleNames)

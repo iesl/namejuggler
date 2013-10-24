@@ -13,7 +13,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
 
   import StringUtils._
 
-  private def canonicalCompatible(a: String, b: String) : Boolean = {
+  private def canonicalCompatible(a: String, b: String): Boolean = {
     val acan = PersonNameWithDerivations(a.n).toCanonical
     val bcan = PersonNameWithDerivations(b.n).toCanonical
     val result = acan compatibleWith bcan
@@ -28,7 +28,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     assert(PersonNameWithDerivations(a).inferFully compatibleWith PersonNameWithDerivations(b).inferFully)
   }*/
 
-  private def notCanonicalCompatible(a: String, b: String) : Boolean = {
+  private def notCanonicalCompatible(a: String, b: String): Boolean = {
     val acan = PersonNameWithDerivations(a.n).toCanonical
     val bcan = PersonNameWithDerivations(b.n).toCanonical
     val result = acan compatibleWith bcan
@@ -107,12 +107,12 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
       assert(inferred.bestFullName === "Dr. Kermit T. Frog III, M.D., Ph.D.".opt)
     }
   }
-  
+
   test("1") {
     val inferred = PersonNameWithDerivations("de Araujo Barbosa, Pedranne Kelle".n).inferFully
     assert(inferred.givenNames === Seq("Pedranne".n, "Kelle".n))
     assert(inferred.surNames === Set("de Araujo Barbosa".n))
-    assert(inferred.allInitials === "P. K. A.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.allInitials === "P. K. A.".opt) // our current lastInitial rules are maybe wacky
     assert(inferred.prefixes === Set.empty)
     assert(inferred.degrees === Set.empty)
     assert(inferred.hereditySuffix === None)
@@ -123,7 +123,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     val inferred = PersonNameWithDerivations("Di Stefano, Rossella".n).inferFully
     assert(inferred.givenNames === Seq("Rossella".n))
     assert(inferred.surNames === Set("Di Stefano".n))
-    assert(inferred.allInitials === "R. D.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.allInitials === "R. D.".opt) // our current lastInitial rules are maybe wacky
     assert(inferred.prefixes === Set.empty)
     assert(inferred.degrees === Set.empty)
     assert(inferred.hereditySuffix === None)
@@ -134,7 +134,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     val inferred = PersonNameWithDerivations("Ben Abdallah, I".n).inferFully
     assert(inferred.givenNames === Seq("I.".n))
     assert(inferred.surNames === Set("Ben Abdallah".n))
-    assert(inferred.allInitials === "I. B.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.allInitials === "I. B.".opt) // our current lastInitial rules are maybe wacky
     assert(inferred.prefixes === Set.empty)
     assert(inferred.degrees === Set.empty)
     assert(inferred.hereditySuffix === None)
@@ -145,7 +145,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     val inferred = PersonNameWithDerivations("Ben Abdallah".n).inferFully
     assert(inferred.givenNames === Seq("Ben".n))
     assert(inferred.surNames === Set("Abdallah".n))
-    assert(inferred.allInitials === "B. A.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.allInitials === "B. A.".opt) // our current lastInitial rules are maybe wacky
     assert(inferred.prefixes === Set.empty)
     assert(inferred.degrees === Set.empty)
     assert(inferred.hereditySuffix === None)
@@ -156,26 +156,26 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     val inferred = PersonNameWithDerivations("Angeles Jimenez-Sousa, Maria".n).inferFully
     assert(inferred.givenNames === Seq("Maria".n))
     assert(inferred.surNames === Set("Angeles Jimenez-Sousa".n)) // ,"Angeles".n,"Jimenez-Sousa".n))  // surname splitting is done within the compatibility test
-    assert(inferred.allInitials === "M. A.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.allInitials === "M. A.".opt) // our current lastInitial rules are maybe wacky
     assert(inferred.prefixes === Set.empty)
     assert(inferred.degrees === Set.empty)
     assert(inferred.hereditySuffix === None)
     assert(inferred.bestFullName === "Maria Angeles Jimenez-Sousa".opt)
   }
-  
+
   test("4b") {
     assert(canonicalCompatible("Angeles Jimenez-Sousa, Maria", "M. Jimenez"))
   }
 
   test("4c") {
-    assert(canonicalCompatible("Angeles Jimenez-Sousa, Maria", "M. Q. Jimenez"))  // because the full name specifies no middle
+    assert(canonicalCompatible("Angeles Jimenez-Sousa, Maria", "M. Q. Jimenez")) // because the full name specifies no middle
   }
 
   test("4d") {
     assert(notCanonicalCompatible("Angeles Jimenez-Sousa, Maria", "Q. Jimenez"))
   }
   test("4e") {
-    assert(notCanonicalCompatible("Angeles Jimenez-Sousa, Maria", "A. Jimenez"))  // because Angeles is not a given name
+    assert(notCanonicalCompatible("Angeles Jimenez-Sousa, Maria", "A. Jimenez")) // because Angeles is not a given name
   }
 
 
@@ -183,15 +183,15 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
     val inferred = PersonNameWithDerivations("do Nascimento, Claudia Oller".n).inferFully
     assert(inferred.givenNames === Seq("Claudia".n, "Oller".n))
     assert(inferred.surNames === Set("do Nascimento".n))
-    assert(inferred.allInitials === "C. O. N.".opt)  // our current lastInitial rules are maybe wacky
+    assert(inferred.allInitials === "C. O. N.".opt) // our current lastInitial rules are maybe wacky
     assert(inferred.prefixes === Set.empty)
     assert(inferred.degrees === Set.empty)
     assert(inferred.hereditySuffix === None)
     assert(inferred.bestFullName === "Claudia Oller do Nascimento".opt)
   }
-  
-  
-  
+
+
+
 
 
   test("Solid-caps formatted complex names are parsed as expected") {
@@ -374,7 +374,7 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   test("Middle initials must match") {
     assert(notCanonicalCompatible("JQS", "JPS"))
   }
-  
+
   test("6") {
     assert(notCanonicalCompatible("P. D. I. Richardson", "P. F. Richardson"))
     assert(notCanonicalCompatible("K. T. Frog", "K. Q. Frog"))
@@ -524,6 +524,23 @@ class PersonNameTest extends FunSuite with BeforeAndAfter with Logging {
   test("Extended-form initials of name starting with Mc, Mac, or O etc. are not recognized") {
     assert(notCanonicalCompatible("Padraic O'Brian", "P O'B"))
     assert(notCanonicalCompatible("Padraic MacDonald", "P MacD"))
+  }
+
+  test("Name merging is sensible about middle initials") {
+    val a = PersonNameWithDerivations("John Smith".n).inferFully
+    val b = PersonNameWithDerivations("JPD Smith".n).inferFully
+    val m = PersonNameWithDerivations.merge(a, b)
+    assert(m.allGivenAndNick === Seq("John".n, "P.".n, "D.".n))
+  }
+
+
+  test("Name merging is sensible about leading initials") {
+    pendingUntilFixed {
+      val a = PersonNameWithDerivations("John D. Smith".n).inferFully
+      val b = PersonNameWithDerivations("Q. John Smith".n).inferFully
+      val m = PersonNameWithDerivations.merge(a, b)
+      assert(m.allGivenAndNick === Seq("Q.".n, "John".n, "D.".n))
+    }
   }
 
 
