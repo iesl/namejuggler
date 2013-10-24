@@ -1,7 +1,7 @@
 package edu.umass.cs.iesl.namejuggler
 
 import edu.umass.cs.iesl.scalacommons.StringUtils._
-import edu.umass.cs.iesl.scalacommons.{SeqUtils, StringUtils, OptionUtils, NonemptyString}
+import edu.umass.cs.iesl.scalacommons.{StringUtils, OptionUtils, NonemptyString}
 import com.typesafe.scalalogging.slf4j.Logging
 
 object PersonName {
@@ -30,12 +30,31 @@ object PersonName {
 
   def merge(s: Seq[PersonName]): PersonName = s.reduceLeft[PersonName](merge)
 
+  private def bestIfCompatibleMaybeInitial(x: NonemptyString, y: NonemptyString): Option[NonemptyString] = {
+    val xx = x.toLowerCase.stripPunctuation
+    val yy = y.toLowerCase.stripPunctuation
+
+    if (xx.isEmpty && yy.isEmpty) None
+    else if (xx.isEmpty) Some(y)
+    else if (yy.isEmpty) Some(x)
+    else if (xx == yy) {
+      if (x.length > y.length) Some(x) else Some(y)
+    }
+    else {
+      val xI = xx.head
+      val yI = yy.head
+
+      if ((xx.length == 1) && xI == yI) Some(y)
+      else if ((yy.length == 1) && xI == yI) Some(x)
+      else None
+    }
+  }
 
   // see also noMismatchingNameOrInitial
-  def combineGivenNames(a:Seq[NonemptyString],b:Seq[NonemptyString]) : Seq[NonemptyString] = {
+  def combineGivenNames(a: Seq[NonemptyString], b: Seq[NonemptyString]): Seq[NonemptyString] = {
 
-     val longer = a //.map(_.toLowerCase.stripPunctuation.n)
-     val shorter = b //.map(_.toLowerCase.stripPunctuation.n)
+    val longer = a //.map(_.toLowerCase.stripPunctuation.n)
+    val shorter = b //.map(_.toLowerCase.stripPunctuation.n)
 
     // should do a real alignment here
     // instead, for now, require that every element of the shorter sequence match something in the longer sequence, in order
@@ -44,48 +63,38 @@ object PersonName {
 
     def mergeGivenNamesRecursion(longer: List[NonemptyString], shorter: List[NonemptyString]): List[NonemptyString] = {
 
-      def bestIfCompatibleMaybeInitial(x: NonemptyString, y: NonemptyString): Option[NonemptyString] = {
-        val xx = x.toLowerCase.stripPunctuation
-        val yy = y.toLowerCase.stripPunctuation
-        
-        val xI = xx.s.head
-        val yI = yy.s.head
-        if(xx == yy) {
-          if(x.length > y.length) Some(x) else Some(y)
-        }
-        else if ((xx.length == 1) && xI == yI) Some(y)
-        else if ((yy.length == 1) && xI == yI) Some(x)
-        else None
-      }
 
       if (shorter.isEmpty) longer
       else
       if (longer.isEmpty) shorter
       else {
         bestIfCompatibleMaybeInitial(longer.head, shorter.head).map(
-          x=> x :: mergeGivenNamesRecursion(longer.tail, shorter.tail) // consume head of each sequence
+          x => x :: mergeGivenNamesRecursion(longer.tail, shorter.tail) // consume head of each sequence
         ).getOrElse(
-          mergeGivenNamesRecursion(longer.tail, shorter)// drop incompatible entry from longer sequence
+          mergeGivenNamesRecursion(longer.tail, shorter) // drop incompatible entry from longer sequence
         )
-       
+
       }
     }
+
     mergeGivenNamesRecursion(longer.toList, shorter.toList)
 
-  
+
   }
-  
+
   def combineGivenNames(set: Set[Seq[NonemptyString]]): Seq[NonemptyString] = {
     // ** align all the sequences, allowing initials to align with full names, and output the consensus sequence
-    
+
     // note we've already decided that these are compatible (one matching 
-    
-    val longestFirst = set.toList.sortBy((x:Seq[NonemptyString])=>{-x.length})
-    
-    val result = longestFirst.reduceLeft((a,b)=>combineGivenNames(a,b))
-    
-  result
-    
+
+    val longestFirst = set.toList.sortBy((x: Seq[NonemptyString]) => {
+      -x.length
+    })
+
+    val result = longestFirst.reduceLeft((a, b) => combineGivenNames(a, b))
+
+    result
+
     // throw new NotImplementedException
     // ** just pick the longest for now
 
@@ -233,7 +242,7 @@ trait CanonicalPersonName extends PersonName with Logging {
 
     logger.debug("testing compatibility: " + this + " vs. " + other)
 
-    
+
     // ** these are redundant?  Well, maybe not, due to withDerivations...
     val matchingFirst = noMismatchingNameOrInitial(allGivenAndNick, other.allGivenAndNick)
 
@@ -270,6 +279,7 @@ trait CanonicalPersonName extends PersonName with Logging {
   private def splitOnHyphens(s: String): Set[String] = {
     s.s.split("-").toSet
   }
+
   private def splitOnWhitespace(s: String): Set[String] = {
     s.s.split("\\s").toSet
   }
