@@ -13,31 +13,31 @@ cultural variations and ambiguities.  Still, this should cover most of the cases
 
 Examples of names that can be parsed:
 
-| input | prefixes | givenNames | nickNamesInQuotes | surNames | hereditySuffix | degrees | preferredFullName |
-| -----:| -------- | ---------- | ----------------- | -------- | -------------- | ------- | ----------------- |
-Kermit T. Frog |  | Kermit T. |  | Frog |  |  |
-K. T. Frog |  | K. T. |  | Frog |  |  |
-K.T. Frog |  | K. T. |  | Frog |  |  |
-KT Frog |  | K. T. |  | Frog |  |  |
-Dr. Kermit T. Frog III, MD, Ph.D. | Dr. | Kermit T. |  | Frog | III | M.D. Ph.D. |
-DR. KERMIT T. FROG III, MD, PHD | Dr. | Kermit T. |  | Frog | III | M.D. Ph.D. |
-Smith,John |  | John |  | Smith |  |  |
-Smith, John |  | John |  | Smith |  |  |
-Smith, John Q. |  | John Q. |  | Smith |  |  |
-John Smith |  | John |  | Smith |  |  |
-Smith, John, Ph.D. |  | John |  | Smith |  | Ph.D. |
-Smith, John, PhD |  | John |  | Smith |  | Ph.D. |
-SMITH, JOHN, PhD |  | John |  | Smith |  | Ph.D. |
-Smith, J |  | J. |  | Smith |  |  |
-Smith, J. |  | J. |  | Smith |  |  |
-Smith, JA |  | J. A. |  | Smith |  |  |
-Smith, J A |  | J. A. |  | Smith |  |  |
-Smith, J.A. |  | J. A. |  | Smith |  |  |
-Smith, J. A. |  | J. A. |  | Smith |  |  |
-Frenkel ter Hofstede |  | Frenkel |  | ter Hofstede |  |  |
-Frenkel Ter Hofstede |  | Frenkel |  | ter Hofstede |  |  |
-Frenkel de La Silva |  | Frenkel |  | de la Silva |  |  |
-Frenkel la Silva del Ruiz |  | Frenkel |  | la Silva del Ruiz |  |
+| input | prefixes | givenNames | surNames | hereditySuffix | degrees |
+| -----:| -------- | ---------- | -------- | -------------- | ------- |
+Kermit T. Frog |  | Kermit T. | Frog |  |  |
+K. T. Frog |  | K. T. | Frog |  |  |
+K.T. Frog |  | K. T. | Frog |  |  |
+KT Frog |  | K. T. | Frog |  |  |
+Dr. Kermit T. Frog III, MD, Ph.D. | Dr. | Kermit T. | Frog | III | M.D. Ph.D. |
+DR. KERMIT T. FROG III, MD, PHD | Dr. | Kermit T. | Frog | III | M.D. Ph.D. |
+Smith,John |  | John | Smith |  |  |
+Smith, John |  | John | Smith |  |  |
+Smith, John Q. |  | John Q. | Smith |  |  |
+John Smith |  | John | Smith |  |  |
+Smith, John, Ph.D. |  | John | Smith |  | Ph.D. |
+Smith, John, PhD |  | John | Smith |  | Ph.D. |
+SMITH, JOHN, PhD |  | John | Smith |  | Ph.D. |
+Smith, J |  | J. | Smith |  |  |
+Smith, J. |  | J. | Smith |  |  |
+Smith, JA |  | J. A. | Smith |  |  |
+Smith, J A |  | J. A. | Smith |  |  |
+Smith, J.A. |  | J. A. | Smith |  |  |
+Smith, J. A. |  | J. A. | Smith |  |  |
+Frenkel ter Hofstede |  | Frenkel | ter Hofstede |  |  |
+Frenkel Ter Hofstede |  | Frenkel | ter Hofstede |  |  |
+Frenkel de La Silva |  | Frenkel | de la Silva |  |  |
+Frenkel la Silva del Ruiz |  | Frenkel | la Silva del Ruiz |  |
 
 Examples of names that are __not__ yet correctly parsed:
 
