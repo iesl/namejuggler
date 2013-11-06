@@ -13,8 +13,8 @@ cultural variations and ambiguities.  Still, this should cover most of the cases
 
 Examples of names that can be parsed:
 
-input | prefixes | givenNames | nickNamesInQuotes | surNames | hereditySuffix | degrees | preferredFullName
--:|-|-|-|-|-|-|-
+| input | prefixes | givenNames | nickNamesInQuotes | surNames | hereditySuffix | degrees | preferredFullName |
+|-:|-|-|-|-|-|-|-|
 Kermit T. Frog |  | Kermit T. |  | Frog |  |  |
 K. T. Frog |  | K. T. |  | Frog |  |  |
 K.T. Frog |  | K. T. |  | Frog |  |  |
