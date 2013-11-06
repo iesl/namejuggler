@@ -105,14 +105,16 @@ To just run the command-line version, please download the [latest build](https:/
 
 To parse names, just pass them to STDIN, one per line; the output is a tab-delimited table like the example above.
 
-    :::sh
-    echo "John Q. Public" | java -jar namejuggler-assembly-0.1-SNAPSHOT.jar
+```sh
+echo "John Q. Public" | java -jar namejuggler-assembly-0.1-SNAPSHOT.jar
+```
 
 To compare names, pass them on a line, delimited by tabs or semicolons, and use the `--compat` flag.  All vs. all comparisons are made among the names on a line, so take care
 how many you include.  Multiple lines are processed independently.
 
-    :::sh
-    echo "John Q. Public ; J.Q. Public ; J. Quentin Public ; R. Q. Public" | java -jar namejuggler-assembly-0.1-SNAPSHOT.jar --compat
+```sh
+echo "John Q. Public ; J.Q. Public ; J. Quentin Public ; R. Q. Public" | java -jar namejuggler-assembly-0.1-SNAPSHOT.jar --compat
+```
 
 The output groups unambiguous cliques of mutually compatible names on lines starting with CLIQUE.  These cliques have no external links and so are unambiguous.
 Lines starting with TRANS show groups of names that are transitively but perhaps not directly compatible.  The
@@ -136,13 +138,15 @@ Things that can be done in code
 
 NameJuggler is mainly meant to be used as a library.  The simplest way to parse a name is:
 
-    :::scala
-    val name : PersonNameWithDerivations = PersonNameWithDerivations("John Q. Public").inferFully
+```scala
+val name : PersonNameWithDerivations = PersonNameWithDerivations("John Q. Public").inferFully
+```
 
 Canonical fields can then be reassembled to produce alternate representations of the name (e.g., representing given names only by initials, etc.)
 
-    :::scala
-    assert(name.initials === "J. Q. P.")
+```scala
+assert(name.initials === "J. Q. P.")
+```
 
 and so forth.
 
