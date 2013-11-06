@@ -1,0 +1,141 @@
+## hgignore-common
+syntax: glob
+
+#*#
+*.DS_Store
+*.class
+*.diff
+*.elc
+*.log
+*.pyc
+*~
+.*.swp
+.DS_Store
+.\#*
+.manager
+class
+log
+*.cache
+unpack
+*-tmp
+tmp-*
+
+.sbtopts
+
+
+
+
+
+
+
+*.class
+*.log
+
+# sbt specific
+.cache/
+.history/
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+
+
+
+
+
+
+# Eclipse config files
+.project
+.classpath
+.settings
+.distfiles
+.scala_dependencies
+
+# Intellij config file
+*.ipr
+*.iws
+
+## sbt build directories
+lib_managed/
+src_managed/
+target/
+project/plugins.sbt
+project/boot/
+project/build/target/
+project/plugins/target/
+project/plugins/lib_managed/
+project/plugins/src_managed/
+.lib
+
+# Intellij IDEA files
+.idea/*
+*.iml
+
+# ensime (emacs scala mode)
+.ensime
+.ensime_lucene/
+
+
+
+
+
+## CVS & SVN
+CVS
+.cvsignore
+.svn
+
+##
+## ignore eclipse/idea/ensime
+.project
+.classpath
+.settings
+.distfiles
+.ensime
+.scala_dependencies
+
+# Intellij IDEA files
+syntax: glob
+.idea/
+*.iml
+*.ipr
+*.iws
+
+## sbt build directories
+.lib/
+lib_managed/
+src_managed/
+target/
+project/boot/
+
+
+
+
+# General temp files
+.DS_Store
+*.ser
+*.pyc
+
+# Files related to Play build or usage
+target
+logs
+
+
+# IDE and editors
+*~
+.idea
+nbproject
+eclipse
+.amateras
+.settings
+.classpath
+.project
+*.iml
+*.ipr
+*.iws
+.ensime*
