@@ -1,16 +1,17 @@
-## hgignore-common
 syntax: glob
 
-#*#
+
+## General temp files
+
 *.DS_Store
 *.class
 *.diff
 *.elc
 *.log
+*.ser
 *.pyc
 *~
 .*.swp
-.DS_Store
 .\#*
 .manager
 class
@@ -19,19 +20,21 @@ log
 unpack
 *-tmp
 tmp-*
+*.orig
+
+
+## CVS, SVN, HG
+
+CVS
+.cvsignore
+.svn
+.hg
+.hgignore
+
+
+## sbt
 
 .sbtopts
-
-
-
-
-
-
-
-*.class
-*.log
-
-# sbt specific
 .cache/
 .history/
 .lib/
@@ -40,14 +43,12 @@ target/
 lib_managed/
 src_managed/
 project/boot/
+project/plugins.sbt
+project/build/target/
 project/plugins/project/
-
-# Scala-IDE specific
-.scala_dependencies
-
-
-
-
+project/plugins/target/
+project/plugins/lib_managed/
+project/plugins/src_managed/
 
 
 # Eclipse config files
@@ -57,85 +58,25 @@ project/plugins/project/
 .distfiles
 .scala_dependencies
 
-# Intellij config file
+
+# Intellij IDEA files
+.idea
+*.iml
 *.ipr
 *.iws
 
-## sbt build directories
-lib_managed/
-src_managed/
-target/
-project/plugins.sbt
-project/boot/
-project/build/target/
-project/plugins/target/
-project/plugins/lib_managed/
-project/plugins/src_managed/
-.lib
-
-# Intellij IDEA files
-.idea/*
-*.iml
 
 # ensime (emacs scala mode)
-.ensime
-.ensime_lucene/
+.ensime*
 
-
-
-
-
-## CVS & SVN
-CVS
-.cvsignore
-.svn
-
-##
-## ignore eclipse/idea/ensime
-.project
-.classpath
-.settings
-.distfiles
-.ensime
-.scala_dependencies
-
-# Intellij IDEA files
-syntax: glob
-.idea/
-*.iml
-*.ipr
-*.iws
-
-## sbt build directories
-.lib/
-lib_managed/
-src_managed/
-target/
-project/boot/
-
-
-
-
-# General temp files
-.DS_Store
-*.ser
-*.pyc
 
 # Files related to Play build or usage
-target
 logs
 
-
-# IDE and editors
-*~
-.idea
+# more IDE and editors
 nbproject
 eclipse
 .amateras
 .settings
 .classpath
 .project
-*.iml
-*.ipr
-*.iws
-.ensime*
