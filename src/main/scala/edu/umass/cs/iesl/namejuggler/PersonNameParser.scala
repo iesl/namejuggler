@@ -138,7 +138,7 @@ object PersonNameParser extends Logging {
 
   def stripSuffixesNoCommas(spaceTokens: Seq[String], containsLowerCase: Boolean, isPostComma: Boolean, hasFirstName: Boolean): (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = {
 
-    if (spaceTokens.size == 0) {
+    if (spaceTokens.size == 0 || (spaceTokens.size == 1 && spaceTokens(0).trim == "")) {
       (None, Set.empty, "")
     }
 
