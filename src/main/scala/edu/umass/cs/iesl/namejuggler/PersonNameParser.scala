@@ -138,14 +138,16 @@ object PersonNameParser extends Logging {
 
   def stripSuffixesNoCommas(spaceTokens: Seq[String], containsLowerCase: Boolean, isPostComma: Boolean, hasFirstName: Boolean): (Option[NonemptyString], Set[NonemptyString], Option[NonemptyString]) = {
 
-    if (spaceTokens.size == 0 || (spaceTokens.size == 1 && spaceTokens(0).trim == "")) {
+    if (spaceTokens.size == 0 || (spaceTokens.size == 1 && spaceTokens(0).trim.isEmpty)) {
       (None, Set.empty, "")
-    }
-
-    else if (spaceTokens.size == 1) {
-      val t = spaceTokens(0).n
-      if (isPostComma && likelyDegree(t, containsLowerCase, hasFirstName)) (None, Set(fixDegree(t.s).n), "")
-      else (None, Set.empty, Some(t))
+    } else if (spaceTokens.size == 1) {
+      if(!spaceTokens(0).trim.isEmpty) {
+        val t = spaceTokens(0).n
+        if (isPostComma && likelyDegree(t, containsLowerCase, hasFirstName)) (None, Set(fixDegree(t.s).n), "")
+        else (None, Set.empty, Some(t))
+      } else {
+        (None, Set.empty, "")
+      }
     }
     else {
       //} if (spaceTokens.size > 1) {
