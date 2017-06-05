@@ -6,8 +6,6 @@
 
 package edu.umass.cs.iesl.namejuggler
 
-import com.typesafe.scalalogging.slf4j.Logging
-
 import edu.umass.cs.iesl.scalacommons.StringUtils._
 
 object PersonNameFormat extends Logging {

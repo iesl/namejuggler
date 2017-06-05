@@ -9,7 +9,6 @@ package edu.umass.cs.iesl.namejuggler
 import edu.umass.cs.iesl.scalacommons.NonemptyString
 import edu.umass.cs.iesl.scalacommons.StringUtils._
 import scala.MatchError
-import com.typesafe.scalalogging.slf4j.Logging
 import annotation.tailrec
 
 
@@ -42,7 +41,7 @@ object PersonNameParser extends Logging {
     }
   }
 
-  private val splitLast = """^(.*[^, ])([, ]+)(.*)$""".r
+  // private val splitLast = """^(.*[^, ])([, ]+)(.*)$""".r
 
   def findHasFirstName(s:String) : Boolean = {
     val sa = s.split(" ")
@@ -51,7 +50,7 @@ object PersonNameParser extends Logging {
   def findHasFirstName(sa:Seq[String]) : Boolean = {
     sa.size > 1 && !isSurnameParticle(sa.head)
   }
-  
+
   /**
    * @param s
    * @param containsLowerCase
@@ -115,18 +114,18 @@ object PersonNameParser extends Logging {
 
       val postCommaSpaceTokens: Array[String] = postComma.split(" ")
       val lastSpaceToken = postCommaSpaceTokens.last
-      
+
       val degreesOrHereditySuffixes = postComma
-      
-      
-      
+
+
+
       val lastNameOnlyBeforeComma = {
         val preCommaTokens: Array[String] = preComma.split(" ")
         val result = isSurnameParticleNoCase(preCommaTokens.head) || preCommaTokens.size == 1
         result
       }
       if(lastNameOnlyBeforeComma) {
-        
+
       }*/
     }
   }
@@ -203,7 +202,7 @@ object PersonNameParser extends Logging {
 
           // if there is a first name and no comma, then the degree might be detected based on capitalization
           if ((isPostComma || hasFirstNameLocal) && likelyDegree(lastToken, containsLowerCase, hasFirstName || hasFirstNameLocal)) {
-            acceptDegree // John Smith MD 
+            acceptDegree // John Smith MD
           } else {
             // if there is no first name and no comma, then any lastToken could be an inverted given name or initials,
             // e.g. Smith JA, so the only way to detect a degree is by lexicon or maybe a pronouncability measure

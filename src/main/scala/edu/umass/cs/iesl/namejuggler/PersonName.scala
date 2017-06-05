@@ -8,7 +8,7 @@ package edu.umass.cs.iesl.namejuggler
 
 import edu.umass.cs.iesl.scalacommons.StringUtils._
 import edu.umass.cs.iesl.scalacommons.{StringUtils, OptionUtils, NonemptyString}
-import com.typesafe.scalalogging.slf4j.Logging
+
 
 object PersonName {
   /**
@@ -290,9 +290,9 @@ trait CanonicalPersonName extends PersonName with Logging {
     s.s.split("\\s").toSet
   }
 
-  private def splitOnSpacesAndHyphens(s: String): Set[String] = {
-    s.s.split("[ -]").toSet
-  }
+  // private def splitOnSpacesAndHyphens(s: String): Set[String] = {
+  //   s.s.split("[ -]").toSet
+  // }
 
 }
 

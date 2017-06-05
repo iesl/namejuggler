@@ -8,21 +8,20 @@ package edu.umass.cs.iesl.namejuggler
 
 import io.Source
 import edu.umass.cs.iesl.scalacommons.StringUtils._
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 import annotation.tailrec
 import collection.mutable
 import scala.Predef._
 import edu.umass.cs.iesl.scalacommons.SeqUtils
-import com.typesafe.scalalogging.slf4j.Logging
 
 /**
  * @author <a href="mailto:dev@davidsoergel.com">David Soergel</a>
  */
 object NameJuggler extends Logging {
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
     if (args.find(_.==("--compat")).isDefined) {
       for (line <- Source.stdin.getLines.map(_.opt).flatten) {
-        val l = StringEscapeUtils.unescapeHtml(line).n
+        val l = StringEscapeUtils.unescapeHtml3(line).n
         val names = l.split("[\t;|]").map(_.trim).filterNot(_.isEmpty)
         logger.info("Testing compability among " + names.size + " names.")
         val z = for (b <- names) yield (b, PersonNameWithDerivations(b.n).toCanonical)
@@ -45,7 +44,7 @@ object NameJuggler extends Logging {
     else {
       println(Seq("prefixes", "givenNames", "nickNamesInQuotes", "surNames", "hereditySuffix", "degrees", "preferredFullName").mkString("\t"))
       for (line <- Source.stdin.getLines.map(_.opt).flatten) {
-        val l = StringEscapeUtils.unescapeHtml(line).n
+        val l = StringEscapeUtils.unescapeHtml3(line).n
         val p = PersonNameWithDerivations(l).inferFully.toCanonical
         println(p.fieldsInCanonicalOrder.map(_.mkString(" ")).mkString("\t"))
       }
@@ -91,12 +90,12 @@ object NameCliquer extends Logging {
 
   private def getOnePartition[A](adjacency: Map[A, Set[A]]): (Set[A], Map[A, Set[A]]) = {
 
-    val (node, neighbors) = adjacency.head
+    val (node, _) = adjacency.head
 
     val done: mutable.Set[A] = mutable.Set.empty
     val members: mutable.Set[A] = mutable.Set.empty + node
 
-    def collectPartition(focal: A) {
+    def collectPartition(focal: A): Unit = {
       val neighbors = adjacency(focal)
       for (n <- neighbors) {
         members.add(n)
@@ -128,7 +127,7 @@ object NameCliquer extends Logging {
   }
 
   @tailrec
-  private def allVsAllCompatibility(namesWithParsed: Seq[(String, CanonicalPersonName)], accum: mutable.Map[String, mutable.Set[String]]) {
+  private def allVsAllCompatibility(namesWithParsed: Seq[(String, CanonicalPersonName)], accum: mutable.Map[String, mutable.Set[String]]): Unit = {
 
     logger.debug("Recursive testing compability among " + namesWithParsed.size + " names.")
     namesWithParsed match {
